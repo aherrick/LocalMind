@@ -17,6 +17,8 @@
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <SelfContained>true</SelfContained>
+    <!-- Without this, dotnet publish drops the app's own .pri (compiled XAML) and WinUI crashes at startup with 0xc000027b. -->
+    <EnableMsixTooling>true</EnableMsixTooling>
     <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
