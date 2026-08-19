@@ -10,7 +10,7 @@ namespace LocalMind.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
-    private readonly IReadOnlyList<ILocalModelProvider> _providers;
+    private readonly List<ILocalModelProvider> _providers;
     private readonly ChatStore _store;
     private readonly NotificationService _notifications;
     private readonly UpdateService _updates;
@@ -26,7 +26,7 @@ public partial class MainViewModel : ObservableObject
     public bool HasPinned => PinnedChats.Count > 0;
 
     [ObservableProperty]
-    public partial ChatViewModel? SelectedChat { get; set; }
+    public partial ChatViewModel SelectedChat { get; set; }
 
     [ObservableProperty]
     public partial string SearchText { get; set; }
@@ -56,45 +56,56 @@ public partial class MainViewModel : ObservableObject
         Settings.ModelReady += name =>
         {
             _notifications.Show("Model ready", $"{name} finished downloading.");
-            _ = RefreshReadyModelsAsync();
+            _ = RefreshReadyModels();
         };
         _updates.UpdateReady += () => _dispatcher.TryEnqueue(() => UpdateReady = true);
     }
 
-    public async Task InitializeAsync()
+    public Task Initialize()
     {
         foreach (var chat in _store.Load())
+        {
             _all.Add(CreateChatViewModel(chat));
+        }
         Refilter();
 
         SelectedChat = PinnedChats.FirstOrDefault() ?? Chats.FirstOrDefault();
         if (SelectedChat is null)
+        {
             NewChat();
+        }
         else
-            _ = SelectedChat.LoadSavedModelAsync();
+        {
+            _ = SelectedChat.LoadSavedModel();
+        }
 
-        _ = RefreshStartupAsync();
-        _ = _updates.CheckAsync();
+        _ = RefreshStartup();
+        _ = _updates.Check();
+        return Task.CompletedTask;
     }
 
-    private async Task RefreshStartupAsync()
+    private async Task RefreshStartup()
     {
-        await RefreshReadyModelsAsync();
-        await Settings.RefreshAsync();
+        await RefreshReadyModels();
+        await Settings.Refresh();
     }
 
     private ChatViewModel CreateChatViewModel(Chat chat)
         => new(chat, _providers, _store, _notifications, _isWindowVisible, ReadyModels);
 
-    public async Task RefreshReadyModelsAsync()
+    public async Task RefreshReadyModels()
     {
-        var models = new List<LocalModel>();
+        List<LocalModel> models = [];
         foreach (var provider in _providers)
-            models.AddRange(await Task.Run(() => provider.GetModelsAsync()));
+        {
+            models.AddRange(await provider.GetModelsAsync());
+        }
 
         ReadyModels.Clear();
         foreach (var model in models)
+        {
             ReadyModels.Add(model);
+        }
     }
 
     [RelayCommand]
@@ -108,43 +119,50 @@ public partial class MainViewModel : ObservableObject
         IsSettingsOpen = false;
     }
 
-    partial void OnSelectedChatChanged(ChatViewModel? value)
+    partial void OnSelectedChatChanged(ChatViewModel value)
     {
         if (value is not null)
         {
             IsSettingsOpen = false;
-            _ = value.LoadSavedModelAsync();
+            _ = value.LoadSavedModel();
         }
     }
 
     [RelayCommand]
-    private async Task OpenSettingsAsync()
+    private async Task OpenSettings()
     {
         IsSettingsOpen = true;
-        await Settings.RefreshAsync();
+        await Settings.Refresh();
     }
 
     [RelayCommand]
-    private void DeleteChat(ChatViewModel? vm)
+    private void DeleteChat(ChatViewModel vm)
     {
         if (vm is null)
+        {
             return;
+        }
 
+        var wasSelected = SelectedChat == vm;
         _store.Delete(vm.Model);
         _all.Remove(vm);
         Refilter();
 
-        if (SelectedChat == vm)
-            SelectedChat = PinnedChats.FirstOrDefault() ?? Chats.FirstOrDefault();
-        if (_all.Count == 0)
+        // Deleting the open chat drops the user into a fresh chat instead of an existing one.
+        if (wasSelected || _all.Count == 0)
+        {
             NewChat();
+        }
     }
 
     [RelayCommand]
-    private void TogglePin(ChatViewModel? vm)
+    private void TogglePin(ChatViewModel vm)
     {
         if (vm is null)
+        {
             return;
+        }
+
         vm.IsPinned = !vm.IsPinned;
         Refilter();
     }
@@ -154,33 +172,42 @@ public partial class MainViewModel : ObservableObject
     private void Refilter()
     {
         var keep = SelectedChat;
-        var query = SearchText?.Trim() ?? "";
-        IEnumerable<ChatViewModel> match = _all;
-        if (query.Length > 0)
-            match = _all.Where(c => c.Matches(query));
-
-        var visible = match.ToList();
-        Sync(PinnedChats, visible.Where(c => c.IsPinned).ToList());
-        Sync(Chats, visible.Where(c => !c.IsPinned).ToList());
+        var query = SearchText.Trim();
+        List<ChatViewModel> visible = query.Length > 0
+            ? [.. _all.Where(c => c.Matches(query))]
+            : [.. _all];
+        Sync(PinnedChats, [.. visible.Where(c => c.IsPinned)]);
+        Sync(Chats, [.. visible.Where(c => !c.IsPinned)]);
         OnPropertyChanged(nameof(HasPinned));
 
         if (keep is not null && _all.Contains(keep))
+        {
             SelectedChat = keep;
+        }
     }
 
-    private static void Sync(ObservableCollection<ChatViewModel> target, IList<ChatViewModel> desired)
+    private static void Sync(ObservableCollection<ChatViewModel> target, List<ChatViewModel> desired)
     {
         for (int i = target.Count - 1; i >= 0; i--)
+        {
             if (!desired.Contains(target[i]))
+            {
                 target.RemoveAt(i);
+            }
+        }
+
         for (int i = 0; i < desired.Count; i++)
         {
             var item = desired[i];
             var current = target.IndexOf(item);
             if (current < 0)
+            {
                 target.Insert(i, item);
+            }
             else if (current != i)
+            {
                 target.Move(current, i);
+            }
         }
     }
 

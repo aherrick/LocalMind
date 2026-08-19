@@ -1,5 +1,7 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
+using FluentSymbol = FluentIcons.Common.Symbol;
+using FluentSymbolIcon = FluentIcons.WinUI.SymbolIcon;
 using LocalMind.ViewModels;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -13,7 +15,7 @@ namespace LocalMind.Views;
 
 public sealed partial class ChatView : UserControl
 {
-    private INotifyCollectionChanged? _messages;
+    private INotifyCollectionChanged _messages;
     private readonly List<ChatMessageVM> _observedMessages = [];
 
     public ChatView()
@@ -27,9 +29,13 @@ public sealed partial class ChatView : UserControl
     private void OnDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
     {
         if (_messages is not null)
+        {
             _messages.CollectionChanged -= OnMessagesChanged;
+        }
         foreach (var message in _observedMessages)
+        {
             message.PropertyChanged -= OnMessagePropertyChanged;
+        }
         _observedMessages.Clear();
 
         if (DataContext is ChatViewModel vm)
@@ -37,16 +43,22 @@ public sealed partial class ChatView : UserControl
             _messages = vm.Messages;
             _messages.CollectionChanged += OnMessagesChanged;
             foreach (var message in vm.Messages)
+            {
                 Observe(message);
+            }
             ScrollToBottom();
         }
     }
 
-    private void OnMessagesChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    private void OnMessagesChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
         if (e.NewItems is not null)
+        {
             foreach (ChatMessageVM message in e.NewItems)
+            {
                 Observe(message);
+            }
+        }
         ScrollToBottom();
     }
 
@@ -56,10 +68,12 @@ public sealed partial class ChatView : UserControl
         message.PropertyChanged += OnMessagePropertyChanged;
     }
 
-    private void OnMessagePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnMessagePropertyChanged(object sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(ChatMessageVM.Text))
+        {
             ScrollToBottom();
+        }
     }
 
     private void ScrollToBottom()
@@ -72,30 +86,36 @@ public sealed partial class ChatView : UserControl
     private async void CopyMessage_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { DataContext: ChatMessageVM message } button)
+        {
             return;
+        }
 
         var package = new DataPackage();
         package.SetText(message.Text);
         Clipboard.SetContent(package);
 
-        if (button.Content is FontIcon icon)
+        if (button.Content is FluentSymbolIcon icon)
         {
-            icon.Glyph = "\uE73E"; // checkmark
+            icon.Symbol = FluentSymbol.Checkmark;
             await Task.Delay(1500);
-            icon.Glyph = "\uE8C8"; // copy
+            icon.Symbol = FluentSymbol.Copy;
         }
     }
 
     private void Regenerate_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is ChatViewModel vm)
+        {
             vm.RegenerateCommand.Execute(null);
+        }
     }
 
     private void InputBox_KeyDown(object sender, KeyRoutedEventArgs e)
     {
         if (e.Key != VirtualKey.Enter)
+        {
             return;
+        }
 
         var shiftDown = InputKeyboardSource
             .GetKeyStateForCurrentThread(VirtualKey.Shift)
@@ -109,6 +129,8 @@ public sealed partial class ChatView : UserControl
 
         e.Handled = true;
         if (DataContext is ChatViewModel vm && vm.SendCommand.CanExecute(null))
+        {
             vm.SendCommand.Execute(null);
+        }
     }
 }

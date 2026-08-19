@@ -23,7 +23,9 @@ public sealed class NotificationService
     public void Show(string title, string message)
     {
         if (!_registered)
+        {
             return;
+        }
         try
         {
             var notification = new AppNotificationBuilder()

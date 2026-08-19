@@ -30,19 +30,21 @@ public partial class FoundryModelVM : ObservableObject
         Status = "…";
     }
 
-    public async Task RefreshAsync()
-        => Status = await Task.Run(() => _foundry.IsReadyAsync(Alias)) ? "Ready" : "Download";
+    public async Task Refresh()
+        => Status = await Task.Run(() => _foundry.IsReady(Alias)) ? "Ready" : "Download";
 
     [RelayCommand]
-    private async Task DownloadAsync()
+    private async Task Download()
     {
         if (Status == "Ready" || IsBusy)
+        {
             return;
+        }
 
         IsBusy = true;
         try
         {
-            await _foundry.DownloadAsync(Alias, p => _dispatcher.TryEnqueue(() => Status = $"{(int)p}%"));
+            await _foundry.Download(Alias, p => _dispatcher.TryEnqueue(() => Status = $"{(int)p}%"));
             Status = "Ready";
             _onReady(DisplayName);
         }
@@ -67,7 +69,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     public partial string OllamaStatus { get; set; }
 
-    public event Action<string>? ModelReady;
+    public event Action<string> ModelReady;
 
     private bool _refreshing;
 
@@ -76,20 +78,26 @@ public partial class SettingsViewModel : ObservableObject
         _ollama = ollama;
         OllamaStatus = "Checking…";
         foreach (var (alias, displayName) in FoundryLocalProvider.Curated)
+        {
             FoundryModels.Add(new FoundryModelVM(foundry, alias, displayName, name => ModelReady?.Invoke(name)));
+        }
     }
 
-    public async Task RefreshAsync()
+    public async Task Refresh()
     {
         if (_refreshing)
+        {
             return;
+        }
         _refreshing = true;
         try
         {
             foreach (var vm in FoundryModels)
-                await vm.RefreshAsync();
+            {
+                await vm.Refresh();
+            }
 
-            var models = await Task.Run(() => _ollama.TryGetModelsAsync());
+            var models = await Task.Run(() => _ollama.TryGetModels());
             if (models is null)
             {
                 OllamaStatus = "Not detected";
@@ -112,10 +120,14 @@ public partial class SettingsViewModel : ObservableObject
     {
         var incoming = names.ToList();
         if (OllamaModels.SequenceEqual(incoming))
+        {
             return;
+        }
 
         OllamaModels.Clear();
         foreach (var name in incoming)
+        {
             OllamaModels.Add(name);
+        }
     }
 }

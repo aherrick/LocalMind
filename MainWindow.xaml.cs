@@ -4,73 +4,85 @@ using LocalMind.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-namespace LocalMind
+namespace LocalMind;
+
+public sealed partial class MainWindow : WinUIEx.WindowEx
 {
-    public sealed partial class MainWindow : WinUIEx.WindowEx
+    private bool _isVisible = true;
+    private bool _forceClose;
+
+    public MainWindow()
     {
-        private bool _isVisible = true;
-        private bool _forceClose;
+        InitializeComponent();
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(AppTitleBar);
+        ShowFromTrayCommand = new RelayCommand(ShowFromTray);
+        AppWindow.Closing += OnClosing;
+    }
 
-        public MainWindow()
+    public ICommand ShowFromTrayCommand { get; }
+
+    public bool IsVisibleToUser => _isVisible;
+
+    public void SetViewModel(MainViewModel viewModel)
+        => Root.DataContext = viewModel;
+
+    private void OnClosing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
+    {
+        if (_forceClose)
         {
-            InitializeComponent();
-            ExtendsContentIntoTitleBar = true;
-            SetTitleBar(AppTitleBar);
-            ShowFromTrayCommand = new RelayCommand(ShowFromTray);
-            AppWindow.Closing += OnClosing;
+            return;
         }
 
-        public ICommand ShowFromTrayCommand { get; }
+        args.Cancel = true;
+        H.NotifyIcon.WindowExtensions.Hide(this);
+        _isVisible = false;
+    }
 
-        public bool IsVisibleToUser => _isVisible;
+    private void ShowFromTray()
+    {
+        H.NotifyIcon.WindowExtensions.Show(this);
+        _isVisible = true;
+        Activate();
+    }
 
-        public void SetViewModel(MainViewModel viewModel)
-            => Root.DataContext = viewModel;
-
-        private void OnClosing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
+    private async void DeleteChat_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: ChatViewModel chat } && Root.DataContext is MainViewModel vm
+            && await Dialogs.Confirm(Content.XamlRoot, "Delete chat?", "This can't be undone."))
         {
-            if (_forceClose)
-                return;
+            vm.DeleteChatCommand.Execute(chat);
+        }
+    }
 
-            args.Cancel = true;
-            H.NotifyIcon.WindowExtensions.Hide(this);
-            _isVisible = false;
+    private void PinChat_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: ChatViewModel chat } && Root.DataContext is MainViewModel vm)
+        {
+            vm.TogglePinCommand.Execute(chat);
+        }
+    }
+
+    private void ChatList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not ListView { SelectedItem: ChatViewModel chat } list || Root.DataContext is not MainViewModel vm)
+        {
+            return;
         }
 
-        private void ShowFromTray()
-        {
-            H.NotifyIcon.WindowExtensions.Show(this);
-            _isVisible = true;
-            Activate();
-        }
+        vm.SelectedChat = chat;
+        // The two lists share one SelectedChat; clear the sibling so only one row stays highlighted.
+        var sibling = ReferenceEquals(list, PinnedList) ? ChatList : PinnedList;
+        sibling.SelectedItem = null;
+    }
 
-        private async void DeleteChat_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is FrameworkElement { DataContext: ChatViewModel chat } && Root.DataContext is MainViewModel vm
-                && await Dialogs.ConfirmAsync(Content.XamlRoot, "Delete chat?", "This can't be undone."))
-                vm.DeleteChatCommand.Execute(chat);
-        }
+    private void TrayOpen_Click(object sender, RoutedEventArgs e) => ShowFromTray();
 
-        private void PinChat_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is FrameworkElement { DataContext: ChatViewModel chat } && Root.DataContext is MainViewModel vm)
-                vm.TogglePinCommand.Execute(chat);
-        }
-
-        private void ChatList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (sender is ListView { SelectedItem: ChatViewModel chat } && Root.DataContext is MainViewModel vm)
-                vm.SelectedChat = chat;
-        }
-
-        private void TrayOpen_Click(object sender, RoutedEventArgs e) => ShowFromTray();
-
-        private void TrayExit_Click(object sender, RoutedEventArgs e)
-        {
-            _forceClose = true;
-            TrayIcon.Dispose();
-            Close();
-        }
+    private void TrayExit_Click(object sender, RoutedEventArgs e)
+    {
+        _forceClose = true;
+        TrayIcon.Dispose();
+        Close();
     }
 }
 

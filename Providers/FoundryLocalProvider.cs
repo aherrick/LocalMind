@@ -19,16 +19,18 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
     ];
 
     private readonly SemaphoreSlim _initGate = new(1, 1);
-    private ICatalog? _catalog;
-    private string? _baseUrl;
+    private ICatalog _catalog;
+    private string _baseUrl;
 
     public string Id => "foundry";
     public string DisplayName => "Foundry Local";
 
-    private async Task<ICatalog> GetCatalogAsync(CancellationToken ct)
+    private async Task<ICatalog> GetCatalog(CancellationToken ct)
     {
         if (_catalog is not null)
+        {
             return _catalog;
+        }
 
         await _initGate.WaitAsync(ct);
         try
@@ -36,11 +38,13 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
             if (_catalog is null)
             {
                 if (!FoundryLocalManager.IsInitialized)
+                {
                     await FoundryLocalManager.CreateAsync(new Configuration
                     {
                         AppName = "LocalMind",
                         Web = new Configuration.WebService { Urls = "http://127.0.0.1:0" }
                     }, NullLogger.Instance, ct);
+                }
 
                 _catalog = await FoundryLocalManager.Instance.GetCatalogAsync(ct);
                 await FoundryLocalManager.Instance.StartWebServiceAsync(ct);
@@ -56,18 +60,20 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
 
     public async Task<IReadOnlyList<LocalModel>> GetModelsAsync(CancellationToken cancellationToken = default)
     {
-        var ready = new List<LocalModel>();
+        List<LocalModel> ready = [];
         try
         {
-            var catalog = await GetCatalogAsync(cancellationToken);
+            var catalog = await GetCatalog(cancellationToken);
             foreach (var (alias, displayName) in Curated)
             {
                 var model = await catalog.GetModelAsync(alias, cancellationToken);
                 if (model is not null && await model.IsCachedAsync(cancellationToken))
+                {
                     ready.Add(new LocalModel(Id, DisplayName, alias, displayName)
                     {
                         SupportsTools = model.Info.SupportsToolCalling ?? false
                     });
+                }
             }
         }
         catch
@@ -76,11 +82,11 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
         return ready;
     }
 
-    public async Task<bool> IsReadyAsync(string alias, CancellationToken cancellationToken = default)
+    public async Task<bool> IsReady(string alias, CancellationToken cancellationToken = default)
     {
         try
         {
-            var catalog = await GetCatalogAsync(cancellationToken);
+            var catalog = await GetCatalog(cancellationToken);
             var model = await catalog.GetModelAsync(alias, cancellationToken);
             return model is not null && await model.IsCachedAsync(cancellationToken);
         }
@@ -90,9 +96,9 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
         }
     }
 
-    public async Task DownloadAsync(string alias, Action<float> progress, CancellationToken cancellationToken = default)
+    public async Task Download(string alias, Action<float> progress, CancellationToken cancellationToken = default)
     {
-        var catalog = await GetCatalogAsync(cancellationToken);
+        var catalog = await GetCatalog(cancellationToken);
         var model = await catalog.GetModelAsync(alias, cancellationToken)
             ?? throw new InvalidOperationException($"Model '{alias}' is not available in the Foundry catalog.");
         await model.DownloadAsync(progress, cancellationToken);
@@ -100,13 +106,15 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
 
     public async Task<IChatClient> CreateChatClientAsync(string modelId, CancellationToken cancellationToken = default)
     {
-        var catalog = await GetCatalogAsync(cancellationToken);
+        var catalog = await GetCatalog(cancellationToken);
         var model = await catalog.GetModelAsync(modelId, cancellationToken)
             ?? throw new InvalidOperationException($"Model '{modelId}' is not available in the Foundry catalog.");
         await model.LoadAsync(cancellationToken);
 
         if (_baseUrl is null)
+        {
             throw new InvalidOperationException("Foundry Local web service is not available.");
+        }
 
         // Foundry Local exposes an OpenAI-compatible endpoint; the local service needs no real API key.
         var client = new OpenAIClient(new ApiKeyCredential("not-needed"), new OpenAIClientOptions { Endpoint = new Uri(_baseUrl.TrimEnd('/') + "/v1") });

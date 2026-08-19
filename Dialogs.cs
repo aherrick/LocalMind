@@ -5,7 +5,7 @@ namespace LocalMind;
 
 public static class Dialogs
 {
-    public static async Task<bool> ConfirmAsync(XamlRoot root, string title, string content, string primaryText = "Delete")
+    public static async Task<bool> Confirm(XamlRoot root, string title, string content, string primaryText = "Delete")
     {
         var dialog = new ContentDialog
         {

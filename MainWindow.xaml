@@ -6,6 +6,7 @@
     xmlns:local="using:LocalMind"
     xmlns:views="using:LocalMind.Views"
     xmlns:vm="using:LocalMind.ViewModels"
+    xmlns:icons="using:FluentIcons.WinUI"
     xmlns:winuiex="using:WinUIEx"
     xmlns:tb="using:H.NotifyIcon"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -60,8 +61,11 @@
                             VerticalAlignment="Center"
                             HorizontalAlignment="Center"
                             PlaceholderText="Search chats and messages..."
-                            QueryIcon="Find"
-                            Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                <AutoSuggestBox.QueryIcon>
+                    <icons:SymbolIcon Symbol="Search" />
+                </AutoSuggestBox.QueryIcon>
+            </AutoSuggestBox>
         </Grid>
 
         <!-- Main content -->
@@ -91,17 +95,25 @@
                                        TextTrimming="CharacterEllipsis"
                                        Text="{Binding Title}" />
                             <Button Grid.Column="1"
-                                    Content="📌"
-                                    FontSize="12"
+                                    Width="32"
+                                    Height="32"
+                                    Padding="0"
                                     Background="Transparent"
                                     BorderThickness="0"
                                     ToolTipService.ToolTip="Pin / Unpin"
-                                    Click="PinChat_Click" />
+                                    Click="PinChat_Click">
+                                <icons:SymbolIcon FontSize="16" Symbol="Pin" />
+                            </Button>
                             <Button Grid.Column="2"
-                                    Content="✕"
+                                    Width="32"
+                                    Height="32"
+                                    Padding="0"
                                     Background="Transparent"
                                     BorderThickness="0"
-                                    Click="DeleteChat_Click" />
+                                    ToolTipService.ToolTip="Delete chat"
+                                    Click="DeleteChat_Click">
+                                <icons:SymbolIcon FontSize="16" Symbol="Delete" />
+                            </Button>
                         </Grid>
                     </DataTemplate>
                 </Grid.Resources>
@@ -114,8 +126,12 @@
 
                 <Button Grid.Row="0"
                         HorizontalAlignment="Stretch"
-                        Content="+ New Chat"
-                        Command="{Binding NewChatCommand}" />
+                        Command="{Binding NewChatCommand}">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                        <icons:SymbolIcon Symbol="Add" />
+                        <TextBlock Text="New Chat" />
+                    </StackPanel>
+                </Button>
 
                 <StackPanel Grid.Row="1"
                             Spacing="4"
@@ -123,7 +139,8 @@
                     <TextBlock Margin="4,4,0,0"
                                Text="Pinned"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                    <ListView ItemsSource="{Binding PinnedChats}"
+                    <ListView x:Name="PinnedList"
+                              ItemsSource="{Binding PinnedChats}"
                               SelectedItem="{Binding SelectedChat, Mode=OneWay}"
                               SelectionChanged="ChatList_SelectionChanged"
                               SelectionMode="Single"
@@ -141,7 +158,8 @@
                                Margin="4,4,0,0"
                                Text="Chats"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                    <ListView Grid.Row="1"
+                    <ListView x:Name="ChatList"
+                              Grid.Row="1"
                               ItemsSource="{Binding Chats}"
                               SelectedItem="{Binding SelectedChat, Mode=OneWay}"
                               SelectionChanged="ChatList_SelectionChanged"
@@ -157,13 +175,21 @@
                              Severity="Success"
                              Title="Update ready">
                         <InfoBar.ActionButton>
-                            <Button Content="Restart" Command="{Binding RestartForUpdateCommand}" />
+                            <Button Command="{Binding RestartForUpdateCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <icons:SymbolIcon Symbol="ArrowClockwise" />
+                                    <TextBlock Text="Restart" />
+                                </StackPanel>
+                            </Button>
                         </InfoBar.ActionButton>
                     </InfoBar>
 
-                    <Button HorizontalAlignment="Stretch"
-                            Content="Settings"
-                            Command="{Binding OpenSettingsCommand}" />
+                    <Button HorizontalAlignment="Stretch" Command="{Binding OpenSettingsCommand}">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                            <icons:SymbolIcon Symbol="Settings" />
+                            <TextBlock Text="Settings" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Grid>
 

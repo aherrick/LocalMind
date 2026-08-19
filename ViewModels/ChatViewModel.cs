@@ -32,7 +32,7 @@ public partial class ChatMessageVM : ObservableObject
     public string Header => Role.ToString();
     public string TimeDisplay => Timestamp.ToLocalTime().ToString("MMM d, h:mm tt");
     public HorizontalAlignment Alignment => IsUser ? HorizontalAlignment.Right : HorizontalAlignment.Left;
-    public Brush? Background => IsUser ? new SolidColorBrush(Windows.UI.Color.FromArgb(255, 50, 50, 50)) : null;
+    public Brush Background => IsUser ? new SolidColorBrush(Windows.UI.Color.FromArgb(255, 50, 50, 50)) : null;
     public Visibility CopyVisibility => !IsUser && !string.IsNullOrEmpty(Text) ? Visibility.Visible : Visibility.Collapsed;
     public bool IsThinking => !IsUser && string.IsNullOrEmpty(Text);
     public Visibility RegenerateVisibility => IsLast && !IsUser && !string.IsNullOrEmpty(Text) ? Visibility.Visible : Visibility.Collapsed;
@@ -67,8 +67,8 @@ public partial class ChatViewModel : ObservableObject
     private readonly NotificationService _notifications;
     private readonly Func<bool> _isWindowVisible;
 
-    private IChatClient? _client;
-    private CancellationTokenSource? _cts;
+    private IChatClient _client;
+    private CancellationTokenSource _cts;
 
     public Chat Model { get; }
     public ObservableCollection<ChatMessageVM> Messages { get; } = [];
@@ -94,7 +94,7 @@ public partial class ChatViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
-    public partial LocalModel? SelectedModel { get; set; }
+    public partial LocalModel SelectedModel { get; set; }
 
     [ObservableProperty]
     public partial bool IsModelLocked { get; set; }
@@ -126,7 +126,9 @@ public partial class ChatViewModel : ObservableObject
         IsPinned = chat.IsPinned;
         IsModelLocked = chat.Messages.Count > 0;
         foreach (var m in chat.Messages)
+        {
             Messages.Add(new ChatMessageVM(ParseRole(m.Role), m.Text, m.Timestamp));
+        }
 
         UpdateModelDisplay();
         UpdateContext();
@@ -139,10 +141,12 @@ public partial class ChatViewModel : ObservableObject
         && !string.IsNullOrWhiteSpace(Input)
         && (IsModelLocked || SelectedModel is not null);
 
-    partial void OnSelectedModelChanged(LocalModel? value)
+    partial void OnSelectedModelChanged(LocalModel value)
     {
         if (value is not null && !IsModelLocked)
-            _ = LoadModelAsync(value.ProviderId, value.Id);
+        {
+            _ = LoadModel(value.ProviderId, value.Id);
+        }
     }
 
     partial void OnIsPinnedChanged(bool value)
@@ -151,23 +155,25 @@ public partial class ChatViewModel : ObservableObject
         _store.Save(Model);
     }
 
-    public Task LoadSavedModelAsync()
-        => IsModelLocked ? LoadModelAsync(Model.ProviderId, Model.ModelId) : Task.CompletedTask;
+    public Task LoadSavedModel()
+        => IsModelLocked ? LoadModel(Model.ProviderId, Model.ModelId) : Task.CompletedTask;
 
     public bool Matches(string query)
         => Title.Contains(query, StringComparison.OrdinalIgnoreCase)
         || Messages.Any(m => m.Text.Contains(query, StringComparison.OrdinalIgnoreCase));
 
-    private async Task LoadModelAsync(string providerId, string modelId)
+    private async Task LoadModel(string providerId, string modelId)
     {
         if (_client is not null || IsModelLoading)
+        {
             return;
+        }
 
         IsModelLoading = true;
         try
         {
             var provider = _providers.First(p => p.Id == providerId);
-            var client = await Task.Run(() => provider.CreateChatClientAsync(modelId));
+            var client = await provider.CreateChatClientAsync(modelId);
             _client = client.AsBuilder().UseFunctionInvocation().Build();
         }
         catch
@@ -181,16 +187,20 @@ public partial class ChatViewModel : ObservableObject
     }
 
     [RelayCommand(CanExecute = nameof(CanSend))]
-    private async Task SendAsync()
+    private async Task Send()
     {
         var text = Input.Trim();
         if (text.Length == 0)
+        {
             return;
+        }
 
         if (!IsModelLocked)
         {
             if (SelectedModel is null)
+            {
                 return;
+            }
             Model.ProviderId = SelectedModel.ProviderId;
             Model.ModelId = SelectedModel.Id;
             Model.ModelDisplayName = SelectedModel.DisplayName;
@@ -209,22 +219,24 @@ public partial class ChatViewModel : ObservableObject
         }
 
         Persist();
-        await GenerateAsync();
+        await Generate();
     }
 
     [RelayCommand]
-    private async Task RegenerateAsync()
+    private async Task Regenerate()
     {
         if (IsGenerating || IsModelLoading || Messages.Count == 0 || Messages[^1].IsUser)
+        {
             return;
+        }
 
         Messages.RemoveAt(Messages.Count - 1);
         UpdateLastFlags();
         Persist();
-        await GenerateAsync();
+        await Generate();
     }
 
-    private async Task GenerateAsync()
+    private async Task Generate()
     {
         IsGenerating = true;
         UpdateLastFlags();
@@ -234,16 +246,19 @@ public partial class ChatViewModel : ObservableObject
         try
         {
             if (_client is null)
-                await LoadModelAsync(Model.ProviderId, Model.ModelId);
+            {
+                await LoadModel(Model.ProviderId, Model.ModelId);
+            }
             if (_client is null)
+            {
                 throw new InvalidOperationException("The selected model could not be loaded.");
+            }
 
-            var history = Messages
+            List<ChatMessage> history = [.. Messages
                 .Take(Messages.Count - 1)
-                .Select(m => new ChatMessage(m.IsUser ? ChatRole.User : ChatRole.Assistant, m.Text))
-                .ToList();
+                .Select(m => new ChatMessage(m.IsUser ? ChatRole.User : ChatRole.Assistant, m.Text))];
 
-            var options = Model.SupportsTools ? ToolOptions : null;
+            var options = SupportsTools() ? ToolOptions : null;
             await foreach (var update in _client.GetStreamingResponseAsync(history, options, _cts.Token))
             {
                 if (!string.IsNullOrEmpty(update.Text))
@@ -260,7 +275,9 @@ public partial class ChatViewModel : ObservableObject
         catch (Exception ex)
         {
             if (string.IsNullOrEmpty(assistant.Text))
+            {
                 assistant.Text = $"[error] {ex.Message}";
+            }
         }
         finally
         {
@@ -271,14 +288,18 @@ public partial class ChatViewModel : ObservableObject
             Persist();
             UpdateContext();
             if (!_isWindowVisible())
+            {
                 _notifications.Show("Response ready", Title);
+            }
         }
     }
 
     private void UpdateLastFlags()
     {
         for (int i = 0; i < Messages.Count; i++)
+        {
             Messages[i].IsLast = i == Messages.Count - 1 && !IsGenerating;
+        }
     }
 
     [RelayCommand]
@@ -286,15 +307,19 @@ public partial class ChatViewModel : ObservableObject
 
     private void Persist()
     {
-        Model.Messages = Messages
-            .Select(m => new StoredMessage { Role = m.Role.ToString(), Text = m.Text, Timestamp = m.Timestamp })
-            .ToList();
+        Model.Messages = [.. Messages
+            .Select(m => new StoredMessage { Role = m.Role.ToString(), Text = m.Text, Timestamp = m.Timestamp })];
         Model.UpdatedAt = DateTimeOffset.Now;
         _store.Save(Model);
     }
 
     private static MessageRole ParseRole(string role)
         => Enum.TryParse<MessageRole>(role, ignoreCase: true, out var parsed) ? parsed : MessageRole.Assistant;
+
+    // Prefer the loaded model's current capability so older chats aren't stuck with a stale persisted value.
+    private bool SupportsTools()
+        => ReadyModels.FirstOrDefault(m => m.ProviderId == Model.ProviderId && m.Id == Model.ModelId)?.SupportsTools
+        ?? Model.SupportsTools;
 
     private void UpdateModelDisplay()
     {

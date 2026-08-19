@@ -15,20 +15,23 @@ public sealed class ChatStore
 
     public IReadOnlyList<Chat> Load()
     {
-        var chats = new List<Chat>();
+        List<Chat> chats = [];
         foreach (var file in Directory.EnumerateFiles(_dir, "*.json"))
         {
             try
             {
                 var chat = JsonSerializer.Deserialize<Chat>(File.ReadAllText(file), Options);
                 if (chat is not null)
+                {
                     chats.Add(chat);
+                }
             }
             catch
             {
             }
         }
-        return chats.OrderByDescending(c => c.UpdatedAt).ToList();
+            chats.Sort((left, right) => right.UpdatedAt.CompareTo(left.UpdatedAt));
+            return chats;
     }
 
     public void Save(Chat chat)
@@ -38,6 +41,8 @@ public sealed class ChatStore
     {
         var path = Path.Combine(_dir, chat.Id + ".json");
         if (File.Exists(path))
+        {
             File.Delete(path);
+        }
     }
 }
