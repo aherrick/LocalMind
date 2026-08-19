@@ -12,12 +12,10 @@
             </ResourceDictionary.MergedDictionaries>
             <local:BoolToVisibilityConverter x:Key="BoolToVisibility" />
             <local:NotBoolConverter x:Key="NotBoolConverter" />
-            <!-- Mirrors the 240px sidebar so centered content lines up with the window, not the area beside the sidebar. -->
-            <Thickness x:Key="SidebarMirrorMargin">0,0,240,0</Thickness>
             <!-- Shared max width so Settings and Chat content are the same size and centered on the window. -->
             <x:Double x:Key="ContentMaxWidth">900</x:Double>
-            <!-- 900px of content plus room for the 240px sidebar on both sides. -->
-            <x:Double x:Key="ContentCenteringMinWindowWidth">1380</x:Double>
+            <!-- 900px of content plus the 240px sidebar mirrored by the responsive envelope. -->
+            <x:Double x:Key="ContentEnvelopeMaxWidth">1140</x:Double>
 
             <!-- Reusable centered lane for page content; responsive behavior lives in one place. -->
             <Style x:Key="ResponsiveContentHostStyle" TargetType="ContentControl">
@@ -30,32 +28,24 @@
                     <Setter.Value>
                         <ControlTemplate TargetType="ContentControl">
                             <Grid>
-                                <VisualStateManager.VisualStateGroups>
-                                    <VisualStateGroup>
-                                        <VisualState x:Name="WideLayout">
-                                            <VisualState.StateTriggers>
-                                                <AdaptiveTrigger MinWindowWidth="{StaticResource ContentCenteringMinWindowWidth}" />
-                                            </VisualState.StateTriggers>
-                                            <VisualState.Setters>
-                                                <Setter Target="ContentPresenter.Margin"
-                                                        Value="{StaticResource SidebarMirrorMargin}" />
-                                            </VisualState.Setters>
-                                        </VisualState>
-                                    </VisualStateGroup>
-                                </VisualStateManager.VisualStateGroups>
+                                <Grid MaxWidth="{StaticResource ContentEnvelopeMaxWidth}"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Stretch">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"
+                                                          MaxWidth="{StaticResource ContentMaxWidth}" />
+                                    </Grid.ColumnDefinitions>
 
-                                <ContentPresenter x:Name="ContentPresenter"
-                                                  MaxWidth="{StaticResource ContentMaxWidth}"
-                                                  Margin="0"
-                                                  Padding="{TemplateBinding Padding}"
-                                                  HorizontalAlignment="Stretch"
-                                                  VerticalAlignment="Stretch"
-                                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                                  Content="{TemplateBinding Content}"
-                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
-                                                  ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}"
-                                                  ContentTransitions="{TemplateBinding ContentTransitions}" />
+                                    <ContentPresenter Padding="{TemplateBinding Padding}"
+                                                      HorizontalAlignment="Stretch"
+                                                      VerticalAlignment="Stretch"
+                                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                      Content="{TemplateBinding Content}"
+                                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                      ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}"
+                                                      ContentTransitions="{TemplateBinding ContentTransitions}" />
+                                </Grid>
                             </Grid>
                         </ControlTemplate>
                     </Setter.Value>
