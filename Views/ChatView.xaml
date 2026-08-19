@@ -56,7 +56,9 @@
 
         <!-- Messages -->
         <ScrollViewer Grid.Row="1" x:Name="MessagesScroll" Padding="16" VerticalScrollBarVisibility="Auto">
-            <ItemsControl ItemsSource="{Binding Messages}">
+            <ItemsControl ItemsSource="{Binding Messages}"
+                          MaxWidth="900"
+                          HorizontalAlignment="Stretch">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:ChatMessageVM">
                         <Grid Margin="0,0,0,16">
@@ -68,8 +70,16 @@
                                     <TextBlock Text="{x:Bind Header}"
                                                FontWeight="SemiBold"
                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    <ProgressRing IsActive="True"
+                                                  Width="20"
+                                                  Height="20"
+                                                  HorizontalAlignment="Left"
+                                                  Visibility="{x:Bind IsThinking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                     <controls:MarkdownTextBlock Text="{x:Bind Text, Mode=OneWay}"
                                                                 IsTextSelectionEnabled="True" />
+                                    <TextBlock Text="{x:Bind TimeDisplay}"
+                                               FontSize="11"
+                                               Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                                     <Button Content="Copy"
                                             HorizontalAlignment="Left"
                                             Padding="6,2"
@@ -88,7 +98,9 @@
         </ScrollViewer>
 
         <!-- Input -->
-        <Grid Grid.Row="2" Padding="16" ColumnSpacing="8">
+        <Grid Grid.Row="2" Padding="16" ColumnSpacing="8"
+              MaxWidth="900"
+              HorizontalAlignment="Stretch">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />

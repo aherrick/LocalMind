@@ -19,21 +19,27 @@ public enum MessageRole
 
 public partial class ChatMessageVM : ObservableObject
 {
-    public ChatMessageVM(MessageRole role, string text)
+    public ChatMessageVM(MessageRole role, string text, DateTimeOffset timestamp)
     {
         Role = role;
         Text = text;
+        Timestamp = timestamp;
     }
 
     public MessageRole Role { get; }
+    public DateTimeOffset Timestamp { get; }
     public bool IsUser => Role == MessageRole.User;
     public string Header => Role.ToString();
+    public string TimeDisplay => Timestamp.ToLocalTime().ToString("MMM d, h:mm tt");
     public HorizontalAlignment Alignment => IsUser ? HorizontalAlignment.Right : HorizontalAlignment.Left;
     public Brush? Background => IsUser ? new SolidColorBrush(Windows.UI.Color.FromArgb(255, 50, 50, 50)) : null;
     public Visibility CopyVisibility => IsUser ? Visibility.Collapsed : Visibility.Visible;
+    public bool IsThinking => !IsUser && string.IsNullOrEmpty(Text);
 
     [ObservableProperty]
     public partial string Text { get; set; }
+
+    partial void OnTextChanged(string value) => OnPropertyChanged(nameof(IsThinking));
 }
 
 public partial class ChatViewModel : ObservableObject
@@ -105,7 +111,7 @@ public partial class ChatViewModel : ObservableObject
         ModelDisplay = "";
         IsModelLocked = chat.Messages.Count > 0;
         foreach (var m in chat.Messages)
-            Messages.Add(new ChatMessageVM(ParseRole(m.Role), m.Text));
+            Messages.Add(new ChatMessageVM(ParseRole(m.Role), m.Text, m.Timestamp));
 
         UpdateModelDisplay();
         UpdateContext();
@@ -168,7 +174,7 @@ public partial class ChatViewModel : ObservableObject
         }
 
         Input = "";
-        Messages.Add(new ChatMessageVM(MessageRole.User, text));
+        Messages.Add(new ChatMessageVM(MessageRole.User, text, DateTimeOffset.Now));
 
         if (Messages.Count == 1)
         {
@@ -180,7 +186,7 @@ public partial class ChatViewModel : ObservableObject
 
         IsGenerating = true;
         _cts = new CancellationTokenSource();
-        var assistant = new ChatMessageVM(MessageRole.Assistant, "");
+        var assistant = new ChatMessageVM(MessageRole.Assistant, "", DateTimeOffset.Now);
         Messages.Add(assistant);
         try
         {
@@ -231,7 +237,7 @@ public partial class ChatViewModel : ObservableObject
     private void Persist()
     {
         Model.Messages = Messages
-            .Select(m => new StoredMessage { Role = m.Role.ToString(), Text = m.Text })
+            .Select(m => new StoredMessage { Role = m.Role.ToString(), Text = m.Text, Timestamp = m.Timestamp })
             .ToList();
         Model.UpdatedAt = DateTimeOffset.Now;
         _store.Save(Model);
