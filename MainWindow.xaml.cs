@@ -25,7 +25,25 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
     public bool IsVisibleToUser => _isVisible;
 
     public void SetViewModel(MainViewModel viewModel)
-        => Root.DataContext = viewModel;
+    {
+        Root.DataContext = viewModel;
+        ApplyTheme(viewModel.Settings.Theme);
+        viewModel.Settings.ThemeChanged += ApplyTheme;
+    }
+
+    private void ApplyTheme(string theme)
+        => Root.RequestedTheme = theme switch
+        {
+            "Light" => ElementTheme.Light,
+            "Dark" => ElementTheme.Dark,
+            _ => ElementTheme.Default,
+        };
+
+    public void HideToTray()
+    {
+        H.NotifyIcon.WindowExtensions.Hide(this);
+        _isVisible = false;
+    }
 
     private void OnClosing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
     {

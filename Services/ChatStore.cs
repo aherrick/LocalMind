@@ -30,8 +30,8 @@ public sealed class ChatStore
             {
             }
         }
-            chats.Sort((left, right) => right.UpdatedAt.CompareTo(left.UpdatedAt));
-            return chats;
+        chats.Sort((left, right) => right.UpdatedAt.CompareTo(left.UpdatedAt));
+        return chats;
     }
 
     public void Save(Chat chat)

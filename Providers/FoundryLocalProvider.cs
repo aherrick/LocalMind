@@ -69,10 +69,7 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
                 var model = await catalog.GetModelAsync(alias, cancellationToken);
                 if (model is not null && await model.IsCachedAsync(cancellationToken))
                 {
-                    ready.Add(new LocalModel(Id, DisplayName, alias, displayName)
-                    {
-                        SupportsTools = model.Info.SupportsToolCalling ?? false
-                    });
+                    ready.Add(new LocalModel(Id, DisplayName, alias, displayName));
                 }
             }
         }

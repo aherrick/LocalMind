@@ -26,14 +26,20 @@ public partial class App : Application
         var notifications = new NotificationService();
         notifications.Register();
         var updates = new UpdateService();
+        var settingsStore = new SettingsStore();
 
         var viewModel = new MainViewModel(
-            foundry, ollama, store, notifications, updates,
+            foundry, ollama, store, notifications, updates, settingsStore,
             () => _window.IsVisibleToUser);
 
         _window.SetViewModel(viewModel);
         _window.Activate();
-        _ = viewModel.Initialize();
+        // Activate first so the tray icon is created, then hide.
+        if (viewModel.Settings.StartMinimized)
+        {
+            _window.HideToTray();
+        }
+        viewModel.Initialize();
     }
 }
 

@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LocalMind.Models;
 using LocalMind.Providers;
+using LocalMind.Services;
 using Microsoft.UI.Dispatching;
 
 namespace LocalMind.ViewModels;
@@ -62,25 +64,64 @@ public partial class FoundryModelVM : ObservableObject
 public partial class SettingsViewModel : ObservableObject
 {
     private readonly OllamaProvider _ollama;
+    private readonly SettingsStore _settingsStore;
+    private readonly AppSettings _settings;
 
     public ObservableCollection<FoundryModelVM> FoundryModels { get; } = [];
     public ObservableCollection<string> OllamaModels { get; } = [];
+    public IReadOnlyList<string> ThemeOptions { get; } = ["System", "Light", "Dark"];
 
     [ObservableProperty]
     public partial string OllamaStatus { get; set; }
 
+    [ObservableProperty]
+    public partial string SystemPrompt { get; set; }
+
+    [ObservableProperty]
+    public partial string Theme { get; set; }
+
+    [ObservableProperty]
+    public partial bool StartMinimized { get; set; }
+
     public event Action<string> ModelReady;
+    public event Action<string> ThemeChanged;
 
     private bool _refreshing;
 
-    public SettingsViewModel(FoundryLocalProvider foundry, OllamaProvider ollama)
+    public SettingsViewModel(FoundryLocalProvider foundry, OllamaProvider ollama, SettingsStore settingsStore)
     {
         _ollama = ollama;
+        _settingsStore = settingsStore;
+        _settings = settingsStore.Load();
+        SystemPrompt = _settings.SystemPrompt;
+        Theme = _settings.Theme;
+        StartMinimized = _settings.StartMinimized;
         OllamaStatus = "Checking…";
         foreach (var (alias, displayName) in FoundryLocalProvider.Curated)
         {
             FoundryModels.Add(new FoundryModelVM(foundry, alias, displayName, name => ModelReady?.Invoke(name)));
         }
+    }
+
+    private void Save() => _settingsStore.Save(_settings);
+
+    partial void OnSystemPromptChanged(string value)
+    {
+        _settings.SystemPrompt = value;
+        Save();
+    }
+
+    partial void OnThemeChanged(string value)
+    {
+        _settings.Theme = value;
+        Save();
+        ThemeChanged?.Invoke(value);
+    }
+
+    partial void OnStartMinimizedChanged(bool value)
+    {
+        _settings.StartMinimized = value;
+        Save();
     }
 
     public async Task Refresh()

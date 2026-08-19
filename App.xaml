@@ -12,6 +12,10 @@
             </ResourceDictionary.MergedDictionaries>
             <local:BoolToVisibilityConverter x:Key="BoolToVisibility" />
             <local:NotBoolConverter x:Key="NotBoolConverter" />
+            <!-- Mirrors the 240px sidebar so centered content lines up with the window, not the area beside the sidebar. -->
+            <Thickness x:Key="SidebarMirrorMargin">0,0,240,0</Thickness>
+            <!-- Shared max width so Settings and Chat content are the same size and centered on the window. -->
+            <x:Double x:Key="ContentMaxWidth">900</x:Double>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

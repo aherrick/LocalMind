@@ -4,7 +4,6 @@ using CommunityToolkit.Mvvm.Input;
 using LocalMind.Models;
 using LocalMind.Providers;
 using LocalMind.Services;
-using LocalMind.Tools;
 using Microsoft.Extensions.AI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
@@ -57,15 +56,11 @@ public partial class ChatViewModel : ObservableObject
 {
     private const int ContextWindow = 32768;
 
-    private static readonly ChatOptions ToolOptions = new()
-    {
-        Tools = [AIFunctionFactory.Create(LocalTools.GetCurrentDateTime)],
-    };
-
     private readonly IReadOnlyList<ILocalModelProvider> _providers;
     private readonly ChatStore _store;
     private readonly NotificationService _notifications;
     private readonly Func<bool> _isWindowVisible;
+    private readonly SettingsViewModel _settings;
 
     private IChatClient _client;
     private CancellationTokenSource _cts;
@@ -111,13 +106,15 @@ public partial class ChatViewModel : ObservableObject
         ChatStore store,
         NotificationService notifications,
         Func<bool> isWindowVisible,
-        ObservableCollection<LocalModel> readyModels)
+        ObservableCollection<LocalModel> readyModels,
+        SettingsViewModel settings)
     {
         Model = chat;
         _providers = providers;
         _store = store;
         _notifications = notifications;
         _isWindowVisible = isWindowVisible;
+        _settings = settings;
         ReadyModels = readyModels;
 
         Title = chat.Title;
@@ -173,8 +170,7 @@ public partial class ChatViewModel : ObservableObject
         try
         {
             var provider = _providers.First(p => p.Id == providerId);
-            var client = await provider.CreateChatClientAsync(modelId);
-            _client = client.AsBuilder().UseFunctionInvocation().Build();
+            _client = await provider.CreateChatClientAsync(modelId);
         }
         catch
         {
@@ -204,7 +200,6 @@ public partial class ChatViewModel : ObservableObject
             Model.ProviderId = SelectedModel.ProviderId;
             Model.ModelId = SelectedModel.Id;
             Model.ModelDisplayName = SelectedModel.DisplayName;
-            Model.SupportsTools = SelectedModel.SupportsTools;
             IsModelLocked = true;
             UpdateModelDisplay();
         }
@@ -258,8 +253,13 @@ public partial class ChatViewModel : ObservableObject
                 .Take(Messages.Count - 1)
                 .Select(m => new ChatMessage(m.IsUser ? ChatRole.User : ChatRole.Assistant, m.Text))];
 
-            var options = SupportsTools() ? ToolOptions : null;
-            await foreach (var update in _client.GetStreamingResponseAsync(history, options, _cts.Token))
+            var systemPrompt = _settings.SystemPrompt;
+            if (!string.IsNullOrWhiteSpace(systemPrompt))
+            {
+                history.Insert(0, new ChatMessage(ChatRole.System, systemPrompt));
+            }
+
+            await foreach (var update in _client.GetStreamingResponseAsync(history, cancellationToken: _cts.Token))
             {
                 if (!string.IsNullOrEmpty(update.Text))
                 {
@@ -315,11 +315,6 @@ public partial class ChatViewModel : ObservableObject
 
     private static MessageRole ParseRole(string role)
         => Enum.TryParse<MessageRole>(role, ignoreCase: true, out var parsed) ? parsed : MessageRole.Assistant;
-
-    // Prefer the loaded model's current capability so older chats aren't stuck with a stale persisted value.
-    private bool SupportsTools()
-        => ReadyModels.FirstOrDefault(m => m.ProviderId == Model.ProviderId && m.Id == Model.ModelId)?.SupportsTools
-        ?? Model.SupportsTools;
 
     private void UpdateModelDisplay()
     {

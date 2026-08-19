@@ -56,11 +56,13 @@
             <!-- Empty drag region behind the search box -->
             <Border x:Name="AppTitleBar" Grid.Column="1" Background="Transparent" />
 
-            <AutoSuggestBox Grid.Column="1"
+            <AutoSuggestBox Grid.Column="0"
+                            Grid.ColumnSpan="3"
                             Width="360"
                             VerticalAlignment="Center"
                             HorizontalAlignment="Center"
                             PlaceholderText="Search chats and messages..."
+                            Visibility="{Binding IsSettingsOpen, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}"
                             Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                 <AutoSuggestBox.QueryIcon>
                     <icons:SymbolIcon Symbol="Search" />

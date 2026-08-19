@@ -56,8 +56,14 @@
         </Border>
 
         <!-- Messages -->
-        <ScrollViewer Grid.Row="1" x:Name="MessagesScroll" Padding="16" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1"
+                      x:Name="MessagesScroll"
+                      Padding="16"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding Messages}"
+                          MaxWidth="{StaticResource ContentMaxWidth}"
+                          Margin="{StaticResource SidebarMirrorMargin}"
                           HorizontalAlignment="Stretch">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:ChatMessageVM">
@@ -103,11 +109,11 @@
                         </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
-                </ItemsControl>
+            </ItemsControl>
         </ScrollViewer>
 
         <!-- Input -->
-        <Grid Grid.Row="2" Padding="16" ColumnSpacing="8">
+        <Grid Grid.Row="2" Padding="16" ColumnSpacing="8" MaxWidth="{StaticResource ContentMaxWidth}" Margin="{StaticResource SidebarMirrorMargin}" HorizontalAlignment="Stretch">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />

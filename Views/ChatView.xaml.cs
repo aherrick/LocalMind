@@ -47,6 +47,10 @@ public sealed partial class ChatView : UserControl
                 Observe(message);
             }
             ScrollToBottom();
+            if (vm.Messages.Count == 0)
+            {
+                DispatcherQueue.TryEnqueue(() => InputBox.Focus(FocusState.Programmatic));
+            }
         }
     }
 

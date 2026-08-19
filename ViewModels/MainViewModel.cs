@@ -43,6 +43,7 @@ public partial class MainViewModel : ObservableObject
         ChatStore store,
         NotificationService notifications,
         UpdateService updates,
+        SettingsStore settingsStore,
         Func<bool> isWindowVisible)
     {
         _providers = [foundry, ollama];
@@ -52,7 +53,7 @@ public partial class MainViewModel : ObservableObject
         _isWindowVisible = isWindowVisible;
         SearchText = "";
 
-        Settings = new SettingsViewModel(foundry, ollama);
+        Settings = new SettingsViewModel(foundry, ollama, settingsStore);
         Settings.ModelReady += name =>
         {
             _notifications.Show("Model ready", $"{name} finished downloading.");
@@ -61,7 +62,7 @@ public partial class MainViewModel : ObservableObject
         _updates.UpdateReady += () => _dispatcher.TryEnqueue(() => UpdateReady = true);
     }
 
-    public Task Initialize()
+    public void Initialize()
     {
         foreach (var chat in _store.Load())
         {
@@ -81,7 +82,6 @@ public partial class MainViewModel : ObservableObject
 
         _ = RefreshStartup();
         _ = _updates.Check();
-        return Task.CompletedTask;
     }
 
     private async Task RefreshStartup()
@@ -91,7 +91,7 @@ public partial class MainViewModel : ObservableObject
     }
 
     private ChatViewModel CreateChatViewModel(Chat chat)
-        => new(chat, _providers, _store, _notifications, _isWindowVisible, ReadyModels);
+        => new(chat, _providers, _store, _notifications, _isWindowVisible, ReadyModels, Settings);
 
     public async Task RefreshReadyModels()
     {
@@ -111,12 +111,13 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     public void NewChat()
     {
-        var vm = CreateChatViewModel(new Chat());
-        _all.Insert(0, vm);
+        var chat = CreateChatViewModel(new Chat());
+        _all.Insert(0, chat);
         SearchText = "";
         Refilter();
-        SelectedChat = vm;
         IsSettingsOpen = false;
+        // Defer so the freshly inserted row is realized before it becomes the selection.
+        _dispatcher.TryEnqueue(() => SelectedChat = chat);
     }
 
     partial void OnSelectedChatChanged(ChatViewModel value)

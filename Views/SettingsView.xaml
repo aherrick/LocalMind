@@ -8,43 +8,150 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
 
-    <ScrollViewer Padding="16">
-        <StackPanel Spacing="24" MaxWidth="520" HorizontalAlignment="Left">
-            <TextBlock Text="Settings" Style="{ThemeResource TitleTextBlockStyle}" />
+    <UserControl.Resources>
+        <Style x:Key="SettingsCard" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{ThemeResource ControlCornerRadius}" />
+            <Setter Property="Padding" Value="16" />
+        </Style>
+        <Style x:Key="SettingCaption" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+        </Style>
+    </UserControl.Resources>
 
-            <StackPanel Spacing="8">
-                <TextBlock Text="Foundry Local" Style="{ThemeResource SubtitleTextBlockStyle}" />
-                <ItemsControl ItemsSource="{Binding FoundryModels}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:FoundryModelVM">
-                            <Grid Margin="0,4" ColumnSpacing="12">
+    <ScrollViewer Padding="24"
+                  HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto">
+        <Grid MaxWidth="{StaticResource ContentMaxWidth}"
+              Margin="{StaticResource SidebarMirrorMargin}"
+              HorizontalAlignment="Stretch"
+              ColumnSpacing="20"
+              RowSpacing="16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Row="0" Grid.ColumnSpan="2"
+                       Text="Settings"
+                       Style="{ThemeResource TitleTextBlockStyle}" />
+
+            <StackPanel Grid.Row="1" Grid.Column="0" Spacing="8">
+                <TextBlock Text="Models" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                <Border Style="{StaticResource SettingsCard}">
+                    <StackPanel Spacing="20">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Foundry Local" />
+                            <ItemsControl ItemsSource="{Binding FoundryModels}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:FoundryModelVM">
+                                        <Grid Margin="0,4" ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{x:Bind DisplayName}" />
+                                            <Button Grid.Column="1"
+                                                    MinWidth="96"
+                                                    Content="{x:Bind Status, Mode=OneWay}"
+                                                    IsEnabled="{x:Bind IsBusy, Mode=OneWay, Converter={StaticResource NotBoolConverter}}"
+                                                    Command="{x:Bind DownloadCommand}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <StackPanel Spacing="8">
+                            <Grid ColumnSpacing="12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{x:Bind DisplayName}" />
-                                <Button Grid.Column="1"
-                                        MinWidth="96"
-                                        Content="{x:Bind Status, Mode=OneWay}"
-                                        IsEnabled="{x:Bind IsBusy, Mode=OneWay, Converter={StaticResource NotBoolConverter}}"
-                                        Command="{x:Bind DownloadCommand}" />
+                                <TextBlock Grid.Column="0" Text="Ollama" />
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding OllamaStatus}"
+                                           Style="{StaticResource SettingCaption}" />
                             </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                            <ItemsControl ItemsSource="{Binding OllamaModels}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                        <TextBlock Margin="0,2"
+                                                   FontSize="12"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                   Text="{x:Bind}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
             </StackPanel>
 
-            <StackPanel Spacing="8">
-                <TextBlock Text="Ollama" Style="{ThemeResource SubtitleTextBlockStyle}" />
-                <TextBlock Text="{Binding OllamaStatus}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <ItemsControl ItemsSource="{Binding OllamaModels}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="x:String">
-                            <TextBlock Margin="0,2" Text="{x:Bind}" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="20">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="General" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                    <Border Style="{StaticResource SettingsCard}">
+                        <StackPanel Spacing="16">
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock Text="Theme" />
+                                    <TextBlock Text="Applies immediately." Style="{StaticResource SettingCaption}" />
+                                </StackPanel>
+                                <ComboBox Grid.Column="1"
+                                          MinWidth="140"
+                                          VerticalAlignment="Center"
+                                          ItemsSource="{Binding ThemeOptions}"
+                                          SelectedItem="{Binding Theme, Mode=TwoWay}" />
+                            </Grid>
+
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock Text="Start minimized to tray" />
+                                    <TextBlock Text="Launch without showing the window." Style="{StaticResource SettingCaption}" />
+                                </StackPanel>
+                                <ToggleSwitch Grid.Column="1"
+                                              MinWidth="0"
+                                              OnContent=""
+                                              OffContent=""
+                                              IsOn="{Binding StartMinimized, Mode=TwoWay}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Chat" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                    <Border Style="{StaticResource SettingsCard}">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="System prompt" />
+                            <TextBlock Text="Sent at the start of every chat." Style="{StaticResource SettingCaption}" />
+                            <TextBox AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     MinHeight="96"
+                                     PlaceholderText="e.g. You are a concise assistant. Answer in plain language."
+                                     Text="{Binding SystemPrompt, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
             </StackPanel>
-        </StackPanel>
+        </Grid>
     </ScrollViewer>
 </UserControl>

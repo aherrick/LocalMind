@@ -19,7 +19,6 @@ public class Chat
     public string ProviderId { get; set; }
     public string ModelId { get; set; }
     public string ModelDisplayName { get; set; }
-    public bool SupportsTools { get; set; }
     public bool IsPinned { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
