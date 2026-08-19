@@ -19,7 +19,6 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!-- Header bar: model selector / context indicator -->
@@ -55,96 +54,101 @@
             </Grid>
         </Border>
 
-        <!-- Messages -->
-        <ScrollViewer Grid.Row="1"
-                      x:Name="MessagesScroll"
-                      Padding="16"
-                      MaxWidth="{StaticResource ContentMaxWidth}"
-                      Margin="{StaticResource SidebarMirrorMargin}"
-                      HorizontalAlignment="Stretch"
-                      HorizontalContentAlignment="Stretch"
-                      HorizontalScrollBarVisibility="Disabled"
-                      VerticalScrollBarVisibility="Auto">
-            <ItemsControl ItemsSource="{Binding Messages}"
-                          HorizontalAlignment="Stretch"
-                          HorizontalContentAlignment="Stretch">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:ChatMessageVM">
-                        <Grid Margin="0,0,0,16">
-                            <Border MaxWidth="640"
-                                    Padding="12,8"
-                                    HorizontalAlignment="{x:Bind Alignment}"
-                                    Background="{x:Bind Background}">
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="{x:Bind Header}"
-                                               FontWeight="SemiBold"
-                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                    <ProgressRing IsActive="True"
-                                                  Width="20"
-                                                  Height="20"
-                                                  HorizontalAlignment="Left"
-                                                  Visibility="{x:Bind IsThinking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                                    <controls:MarkdownTextBlock Text="{x:Bind Text, Mode=OneWay}"
-                                                                IsTextSelectionEnabled="True" />
-                                    <TextBlock Text="{x:Bind TimeDisplay}"
-                                               FontSize="11"
-                                               Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-                                    <StackPanel Orientation="Horizontal" Spacing="2">
-                                        <Button Padding="6,2"
-                                                Background="Transparent"
-                                                BorderThickness="0"
-                                                ToolTipService.ToolTip="Copy"
-                                                Visibility="{x:Bind CopyVisibility, Mode=OneWay}"
-                                                Click="CopyMessage_Click">
-                                            <icons:SymbolIcon FontSize="14" Symbol="Copy" />
-                                        </Button>
-                                        <Button Padding="6,2"
-                                                Background="Transparent"
-                                                BorderThickness="0"
-                                                ToolTipService.ToolTip="Regenerate response"
-                                                Visibility="{x:Bind RegenerateVisibility, Mode=OneWay}"
-                                                Click="Regenerate_Click">
-                                            <icons:SymbolIcon FontSize="14" Symbol="ArrowClockwise" />
-                                        </Button>
-                                    </StackPanel>
-                                </StackPanel>
-                            </Border>
-                        </Grid>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+        <ContentControl Grid.Row="1" Style="{StaticResource ResponsiveContentHostStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-        <!-- Input -->
-        <Grid Grid.Row="2" Padding="16" ColumnSpacing="8" MaxWidth="{StaticResource ContentMaxWidth}" Margin="{StaticResource SidebarMirrorMargin}" HorizontalAlignment="Stretch">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+                <!-- Messages -->
+                <ScrollViewer Grid.Row="0"
+                              x:Name="MessagesScroll"
+                              Padding="16"
+                              HorizontalContentAlignment="Stretch"
+                              HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Messages}"
+                                  HorizontalAlignment="Stretch"
+                                  HorizontalContentAlignment="Stretch">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ChatMessageVM">
+                                <Grid Margin="0,0,0,16">
+                                    <Border Padding="12,8"
+                                            HorizontalAlignment="{x:Bind Alignment}"
+                                            Background="{x:Bind Background}">
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="{x:Bind Header}"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                            <ProgressRing IsActive="True"
+                                                          Width="20"
+                                                          Height="20"
+                                                          HorizontalAlignment="Left"
+                                                          Visibility="{x:Bind IsThinking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                            <controls:MarkdownTextBlock Text="{x:Bind Text, Mode=OneWay}"
+                                                                        IsTextSelectionEnabled="True" />
+                                            <TextBlock Text="{x:Bind TimeDisplay}"
+                                                       FontSize="11"
+                                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                            <StackPanel Orientation="Horizontal" Spacing="2">
+                                                <Button Padding="6,2"
+                                                        Background="Transparent"
+                                                        BorderThickness="0"
+                                                        ToolTipService.ToolTip="Copy"
+                                                        Visibility="{x:Bind CopyVisibility, Mode=OneWay}"
+                                                        Click="CopyMessage_Click">
+                                                    <icons:SymbolIcon FontSize="14" Symbol="Copy" />
+                                                </Button>
+                                                <Button Padding="6,2"
+                                                        Background="Transparent"
+                                                        BorderThickness="0"
+                                                        ToolTipService.ToolTip="Regenerate response"
+                                                        Visibility="{x:Bind RegenerateVisibility, Mode=OneWay}"
+                                                        Click="Regenerate_Click">
+                                                    <icons:SymbolIcon FontSize="14" Symbol="ArrowClockwise" />
+                                                </Button>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
 
-            <TextBox Grid.Column="0"
-                     x:Name="InputBox"
-                     PlaceholderText="Ask anything..."
-                     AcceptsReturn="False"
-                     TextWrapping="Wrap"
-                     MaxHeight="160"
-                     Text="{Binding Input, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <!-- Input -->
+                <Grid Grid.Row="1" Padding="16" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-            <Button Grid.Column="1"
-                    Width="48"
-                    ToolTipService.ToolTip="Send message"
-                    Command="{Binding SendCommand}"
-                    Visibility="{Binding IsGenerating, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
-                <icons:SymbolIcon Symbol="Send" />
-            </Button>
+                    <TextBox Grid.Column="0"
+                             x:Name="InputBox"
+                             PlaceholderText="Ask anything..."
+                             AcceptsReturn="False"
+                             TextWrapping="Wrap"
+                             MaxHeight="160"
+                             Text="{Binding Input, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-            <Button Grid.Column="1"
-                    Width="48"
-                    ToolTipService.ToolTip="Stop generating"
-                    Command="{Binding StopCommand}"
-                    Visibility="{Binding IsGenerating, Converter={StaticResource BoolToVisibility}}">
-                <icons:SymbolIcon Symbol="Stop" />
-            </Button>
-        </Grid>
+                    <Button Grid.Column="1"
+                            Width="48"
+                            ToolTipService.ToolTip="Send message"
+                            Command="{Binding SendCommand}"
+                            Visibility="{Binding IsGenerating, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
+                        <icons:SymbolIcon Symbol="Send" />
+                    </Button>
+
+                    <Button Grid.Column="1"
+                            Width="48"
+                            ToolTipService.ToolTip="Stop generating"
+                            Command="{Binding StopCommand}"
+                            Visibility="{Binding IsGenerating, Converter={StaticResource BoolToVisibility}}">
+                        <icons:SymbolIcon Symbol="Stop" />
+                    </Button>
+                </Grid>
+            </Grid>
+        </ContentControl>
     </Grid>
 </UserControl>

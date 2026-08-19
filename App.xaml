@@ -16,6 +16,51 @@
             <Thickness x:Key="SidebarMirrorMargin">0,0,240,0</Thickness>
             <!-- Shared max width so Settings and Chat content are the same size and centered on the window. -->
             <x:Double x:Key="ContentMaxWidth">900</x:Double>
+            <!-- 900px of content plus room for the 240px sidebar on both sides. -->
+            <x:Double x:Key="ContentCenteringMinWindowWidth">1380</x:Double>
+
+            <!-- Reusable centered lane for page content; responsive behavior lives in one place. -->
+            <Style x:Key="ResponsiveContentHostStyle" TargetType="ContentControl">
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="VerticalAlignment" Value="Stretch" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                <Setter Property="IsTabStop" Value="False" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ContentControl">
+                            <Grid>
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup>
+                                        <VisualState x:Name="WideLayout">
+                                            <VisualState.StateTriggers>
+                                                <AdaptiveTrigger MinWindowWidth="{StaticResource ContentCenteringMinWindowWidth}" />
+                                            </VisualState.StateTriggers>
+                                            <VisualState.Setters>
+                                                <Setter Target="ContentPresenter.Margin"
+                                                        Value="{StaticResource SidebarMirrorMargin}" />
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+
+                                <ContentPresenter x:Name="ContentPresenter"
+                                                  MaxWidth="{StaticResource ContentMaxWidth}"
+                                                  Margin="0"
+                                                  Padding="{TemplateBinding Padding}"
+                                                  HorizontalAlignment="Stretch"
+                                                  VerticalAlignment="Stretch"
+                                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                  Content="{TemplateBinding Content}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}"
+                                                  ContentTransitions="{TemplateBinding ContentTransitions}" />
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
