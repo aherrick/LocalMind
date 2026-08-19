@@ -23,12 +23,14 @@
         </Style>
     </UserControl.Resources>
 
-    <ScrollViewer Padding="24"
+    <ScrollViewer Padding="16"
+                  MaxWidth="{StaticResource ContentMaxWidth}"
+                  Margin="{StaticResource SidebarMirrorMargin}"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Stretch"
                   HorizontalScrollBarVisibility="Disabled"
                   VerticalScrollBarVisibility="Auto">
-        <Grid MaxWidth="{StaticResource ContentMaxWidth}"
-              Margin="{StaticResource SidebarMirrorMargin}"
-              HorizontalAlignment="Stretch"
+        <Grid HorizontalAlignment="Stretch"
               ColumnSpacing="20"
               RowSpacing="16">
             <Grid.RowDefinitions>

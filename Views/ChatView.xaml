@@ -59,12 +59,15 @@
         <ScrollViewer Grid.Row="1"
                       x:Name="MessagesScroll"
                       Padding="16"
+                      MaxWidth="{StaticResource ContentMaxWidth}"
+                      Margin="{StaticResource SidebarMirrorMargin}"
+                      HorizontalAlignment="Stretch"
+                      HorizontalContentAlignment="Stretch"
                       HorizontalScrollBarVisibility="Disabled"
                       VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding Messages}"
-                          MaxWidth="{StaticResource ContentMaxWidth}"
-                          Margin="{StaticResource SidebarMirrorMargin}"
-                          HorizontalAlignment="Stretch">
+                          HorizontalAlignment="Stretch"
+                          HorizontalContentAlignment="Stretch">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:ChatMessageVM">
                         <Grid Margin="0,0,0,16">

@@ -81,7 +81,6 @@ public partial class MainViewModel : ObservableObject
         }
 
         _ = RefreshStartup();
-        _ = _updates.Check();
     }
 
     private async Task RefreshStartup()
@@ -214,4 +213,7 @@ public partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void RestartForUpdate() => _updates.ApplyAndRestart();
+
+    [RelayCommand]
+    private Task CheckForUpdates() => _updates.Check();
 }

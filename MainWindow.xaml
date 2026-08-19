@@ -34,6 +34,7 @@
                 <MenuFlyout>
                     <MenuFlyoutItem Text="Open" Click="TrayOpen_Click" />
                     <MenuFlyoutItem Text="New Chat" Command="{Binding NewChatCommand}" />
+                    <MenuFlyoutItem Text="Check for Updates" Command="{Binding CheckForUpdatesCommand}" />
                     <MenuFlyoutItem Text="Exit" Click="TrayExit_Click" />
                 </MenuFlyout>
             </tb:TaskbarIcon.ContextFlyout>

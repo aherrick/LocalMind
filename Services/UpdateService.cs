@@ -4,7 +4,7 @@ namespace LocalMind.Services;
 
 public sealed class UpdateService
 {
-    private const string UpdateUrl = "";
+    private const string UpdateUrl = "https://github.com/aherrick/LocalMind/releases/latest/download";
 
     private UpdateManager _manager;
     private UpdateInfo _pending;
