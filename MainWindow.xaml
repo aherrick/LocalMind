@@ -18,10 +18,10 @@
     </Window.SystemBackdrop>
 
     <Grid x:Name="Root">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="240" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
         <tb:TaskbarIcon x:Name="TrayIcon"
                         ToolTipText="LocalMind"
@@ -38,41 +38,52 @@
             </tb:TaskbarIcon.ContextFlyout>
         </tb:TaskbarIcon>
 
-        <!-- Sidebar -->
-        <Grid Grid.Column="0" Padding="16" RowSpacing="8"
-              Background="{ThemeResource LayerFillColorDefaultBrush}">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+        <!-- Title bar with search -->
+        <Grid Grid.Row="0" Height="40">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="150" />
+            </Grid.ColumnDefinitions>
 
-            <Button Grid.Row="0"
-                    HorizontalAlignment="Stretch"
-                    Content="+ New Chat"
-                    Command="{Binding NewChatCommand}" />
+            <TextBlock Grid.Column="0"
+                       Margin="14,0,0,0"
+                       VerticalAlignment="Center"
+                       FontWeight="SemiBold"
+                       Text="LocalMind" />
 
-            <TextBlock Grid.Row="1"
-                       Margin="4,8,0,0"
-                       Text="Chats"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <!-- Empty drag region behind the search box -->
+            <Border x:Name="AppTitleBar" Grid.Column="1" Background="Transparent" />
 
-            <ListView Grid.Row="2"
-                      ItemsSource="{Binding Chats}"
-                      SelectedItem="{Binding SelectedChat, Mode=TwoWay}"
-                      SelectionMode="Single">
-                <ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem">
+            <AutoSuggestBox Grid.Column="1"
+                            Width="360"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Center"
+                            PlaceholderText="Search chats and messages..."
+                            QueryIcon="Find"
+                            Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        </Grid>
+
+        <!-- Main content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="240" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Sidebar -->
+            <Grid Grid.Column="0" Padding="16" RowSpacing="8"
+                  Background="{ThemeResource LayerFillColorDefaultBrush}">
+                <Grid.Resources>
+                    <Style x:Key="ChatItemContainerStyle" TargetType="ListViewItem">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                         <Setter Property="Padding" Value="8,4" />
                     </Style>
-                </ListView.ItemContainerStyle>
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="vm:ChatViewModel">
-                        <Grid ColumnSpacing="8">
+                    <DataTemplate x:Key="ChatItemTemplate" x:DataType="vm:ChatViewModel">
+                        <Grid ColumnSpacing="4">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0"
@@ -80,38 +91,89 @@
                                        TextTrimming="CharacterEllipsis"
                                        Text="{Binding Title}" />
                             <Button Grid.Column="1"
+                                    Content="📌"
+                                    FontSize="12"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    ToolTipService.ToolTip="Pin / Unpin"
+                                    Click="PinChat_Click" />
+                            <Button Grid.Column="2"
                                     Content="✕"
                                     Background="Transparent"
                                     BorderThickness="0"
                                     Click="DeleteChat_Click" />
                         </Grid>
                     </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
+                </Grid.Resources>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="3" Spacing="8">
-                <InfoBar Visibility="{Binding UpdateReady, Converter={StaticResource BoolToVisibility}}"
-                         IsOpen="{Binding UpdateReady}"
-                         IsClosable="False"
-                         Severity="Success"
-                         Title="Update ready">
-                    <InfoBar.ActionButton>
-                        <Button Content="Restart" Command="{Binding RestartForUpdateCommand}" />
-                    </InfoBar.ActionButton>
-                </InfoBar>
+                <Button Grid.Row="0"
+                        HorizontalAlignment="Stretch"
+                        Content="+ New Chat"
+                        Command="{Binding NewChatCommand}" />
 
-                <Button HorizontalAlignment="Stretch"
-                        Content="Settings"
-                        Command="{Binding OpenSettingsCommand}" />
-            </StackPanel>
-        </Grid>
+                <StackPanel Grid.Row="1"
+                            Spacing="4"
+                            Visibility="{Binding HasPinned, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Margin="4,4,0,0"
+                               Text="Pinned"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <ListView ItemsSource="{Binding PinnedChats}"
+                              SelectedItem="{Binding SelectedChat, Mode=OneWay}"
+                              SelectionChanged="ChatList_SelectionChanged"
+                              SelectionMode="Single"
+                              MaxHeight="220"
+                              ItemContainerStyle="{StaticResource ChatItemContainerStyle}"
+                              ItemTemplate="{StaticResource ChatItemTemplate}" />
+                </StackPanel>
 
-        <!-- Content -->
-        <Grid Grid.Column="1">
-            <views:ChatView DataContext="{Binding SelectedChat}"
-                            Visibility="{Binding DataContext.IsSettingsOpen, ElementName=Root, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
-            <views:SettingsView DataContext="{Binding Settings}"
-                                Visibility="{Binding DataContext.IsSettingsOpen, ElementName=Root, Converter={StaticResource BoolToVisibility}}" />
+                <Grid Grid.Row="2" RowSpacing="4">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0"
+                               Margin="4,4,0,0"
+                               Text="Chats"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <ListView Grid.Row="1"
+                              ItemsSource="{Binding Chats}"
+                              SelectedItem="{Binding SelectedChat, Mode=OneWay}"
+                              SelectionChanged="ChatList_SelectionChanged"
+                              SelectionMode="Single"
+                              ItemContainerStyle="{StaticResource ChatItemContainerStyle}"
+                              ItemTemplate="{StaticResource ChatItemTemplate}" />
+                </Grid>
+
+                <StackPanel Grid.Row="3" Spacing="8">
+                    <InfoBar Visibility="{Binding UpdateReady, Converter={StaticResource BoolToVisibility}}"
+                             IsOpen="{Binding UpdateReady}"
+                             IsClosable="False"
+                             Severity="Success"
+                             Title="Update ready">
+                        <InfoBar.ActionButton>
+                            <Button Content="Restart" Command="{Binding RestartForUpdateCommand}" />
+                        </InfoBar.ActionButton>
+                    </InfoBar>
+
+                    <Button HorizontalAlignment="Stretch"
+                            Content="Settings"
+                            Command="{Binding OpenSettingsCommand}" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Content -->
+            <Grid Grid.Column="1">
+                <views:ChatView DataContext="{Binding SelectedChat}"
+                                Visibility="{Binding DataContext.IsSettingsOpen, ElementName=Root, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                <views:SettingsView DataContext="{Binding Settings}"
+                                    Visibility="{Binding DataContext.IsSettingsOpen, ElementName=Root, Converter={StaticResource BoolToVisibility}}" />
+            </Grid>
         </Grid>
     </Grid>
 </winuiex:WindowEx>

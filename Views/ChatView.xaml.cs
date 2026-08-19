@@ -78,9 +78,18 @@ public sealed partial class ChatView : UserControl
         package.SetText(message.Text);
         Clipboard.SetContent(package);
 
-        button.Content = "Copied";
-        await Task.Delay(1500);
-        button.Content = "Copy";
+        if (button.Content is FontIcon icon)
+        {
+            icon.Glyph = "\uE73E"; // checkmark
+            await Task.Delay(1500);
+            icon.Glyph = "\uE8C8"; // copy
+        }
+    }
+
+    private void Regenerate_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is ChatViewModel vm)
+            vm.RegenerateCommand.Execute(null);
     }
 
     private void InputBox_KeyDown(object sender, KeyRoutedEventArgs e)

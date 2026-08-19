@@ -2,6 +2,7 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using LocalMind.ViewModels;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace LocalMind
 {
@@ -13,6 +14,8 @@ namespace LocalMind
         public MainWindow()
         {
             InitializeComponent();
+            ExtendsContentIntoTitleBar = true;
+            SetTitleBar(AppTitleBar);
             ShowFromTrayCommand = new RelayCommand(ShowFromTray);
             AppWindow.Closing += OnClosing;
         }
@@ -46,6 +49,18 @@ namespace LocalMind
             if (sender is FrameworkElement { DataContext: ChatViewModel chat } && Root.DataContext is MainViewModel vm
                 && await Dialogs.ConfirmAsync(Content.XamlRoot, "Delete chat?", "This can't be undone."))
                 vm.DeleteChatCommand.Execute(chat);
+        }
+
+        private void PinChat_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement { DataContext: ChatViewModel chat } && Root.DataContext is MainViewModel vm)
+                vm.TogglePinCommand.Execute(chat);
+        }
+
+        private void ChatList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ListView { SelectedItem: ChatViewModel chat } && Root.DataContext is MainViewModel vm)
+                vm.SelectedChat = chat;
         }
 
         private void TrayOpen_Click(object sender, RoutedEventArgs e) => ShowFromTray();

@@ -16,13 +16,20 @@ public partial class MainViewModel : ObservableObject
     private readonly UpdateService _updates;
     private readonly Func<bool> _isWindowVisible;
     private readonly DispatcherQueue _dispatcher = DispatcherQueue.GetForCurrentThread();
+    private readonly List<ChatViewModel> _all = [];
 
+    public ObservableCollection<ChatViewModel> PinnedChats { get; } = [];
     public ObservableCollection<ChatViewModel> Chats { get; } = [];
     public ObservableCollection<LocalModel> ReadyModels { get; } = [];
     public SettingsViewModel Settings { get; }
 
+    public bool HasPinned => PinnedChats.Count > 0;
+
     [ObservableProperty]
     public partial ChatViewModel? SelectedChat { get; set; }
+
+    [ObservableProperty]
+    public partial string SearchText { get; set; }
 
     [ObservableProperty]
     public partial bool IsSettingsOpen { get; set; }
@@ -43,6 +50,7 @@ public partial class MainViewModel : ObservableObject
         _notifications = notifications;
         _updates = updates;
         _isWindowVisible = isWindowVisible;
+        SearchText = "";
 
         Settings = new SettingsViewModel(foundry, ollama);
         Settings.ModelReady += name =>
@@ -56,15 +64,14 @@ public partial class MainViewModel : ObservableObject
     public async Task InitializeAsync()
     {
         foreach (var chat in _store.Load())
-            Chats.Add(CreateChatViewModel(chat));
+            _all.Add(CreateChatViewModel(chat));
+        Refilter();
 
-        if (Chats.Count > 0)
-        {
-            SelectedChat = Chats[0];
-            _ = SelectedChat.LoadSavedModelAsync();
-        }
-        else
+        SelectedChat = PinnedChats.FirstOrDefault() ?? Chats.FirstOrDefault();
+        if (SelectedChat is null)
             NewChat();
+        else
+            _ = SelectedChat.LoadSavedModelAsync();
 
         _ = RefreshStartupAsync();
         _ = _updates.CheckAsync();
@@ -94,7 +101,9 @@ public partial class MainViewModel : ObservableObject
     public void NewChat()
     {
         var vm = CreateChatViewModel(new Chat());
-        Chats.Insert(0, vm);
+        _all.Insert(0, vm);
+        SearchText = "";
+        Refilter();
         SelectedChat = vm;
         IsSettingsOpen = false;
     }
@@ -102,7 +111,10 @@ public partial class MainViewModel : ObservableObject
     partial void OnSelectedChatChanged(ChatViewModel? value)
     {
         if (value is not null)
+        {
+            IsSettingsOpen = false;
             _ = value.LoadSavedModelAsync();
+        }
     }
 
     [RelayCommand]
@@ -119,12 +131,57 @@ public partial class MainViewModel : ObservableObject
             return;
 
         _store.Delete(vm.Model);
-        Chats.Remove(vm);
+        _all.Remove(vm);
+        Refilter();
 
         if (SelectedChat == vm)
-            SelectedChat = Chats.FirstOrDefault();
-        if (Chats.Count == 0)
+            SelectedChat = PinnedChats.FirstOrDefault() ?? Chats.FirstOrDefault();
+        if (_all.Count == 0)
             NewChat();
+    }
+
+    [RelayCommand]
+    private void TogglePin(ChatViewModel? vm)
+    {
+        if (vm is null)
+            return;
+        vm.IsPinned = !vm.IsPinned;
+        Refilter();
+    }
+
+    partial void OnSearchTextChanged(string value) => Refilter();
+
+    private void Refilter()
+    {
+        var keep = SelectedChat;
+        var query = SearchText?.Trim() ?? "";
+        IEnumerable<ChatViewModel> match = _all;
+        if (query.Length > 0)
+            match = _all.Where(c => c.Matches(query));
+
+        var visible = match.ToList();
+        Sync(PinnedChats, visible.Where(c => c.IsPinned).ToList());
+        Sync(Chats, visible.Where(c => !c.IsPinned).ToList());
+        OnPropertyChanged(nameof(HasPinned));
+
+        if (keep is not null && _all.Contains(keep))
+            SelectedChat = keep;
+    }
+
+    private static void Sync(ObservableCollection<ChatViewModel> target, IList<ChatViewModel> desired)
+    {
+        for (int i = target.Count - 1; i >= 0; i--)
+            if (!desired.Contains(target[i]))
+                target.RemoveAt(i);
+        for (int i = 0; i < desired.Count; i++)
+        {
+            var item = desired[i];
+            var current = target.IndexOf(item);
+            if (current < 0)
+                target.Insert(i, item);
+            else if (current != i)
+                target.Move(current, i);
+        }
     }
 
     [RelayCommand]

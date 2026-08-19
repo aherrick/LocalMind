@@ -56,9 +56,14 @@
 
         <!-- Messages -->
         <ScrollViewer Grid.Row="1" x:Name="MessagesScroll" Padding="16" VerticalScrollBarVisibility="Auto">
-            <ItemsControl ItemsSource="{Binding Messages}"
-                          MaxWidth="900"
-                          HorizontalAlignment="Stretch">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MaxWidth="1260" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ItemsControl Grid.Column="0"
+                              ItemsSource="{Binding Messages}"
+                              HorizontalAlignment="Stretch">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:ChatMessageVM">
                         <Grid Margin="0,0,0,16">
@@ -80,51 +85,65 @@
                                     <TextBlock Text="{x:Bind TimeDisplay}"
                                                FontSize="11"
                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-                                    <Button Content="Copy"
-                                            HorizontalAlignment="Left"
-                                            Padding="6,2"
-                                            FontSize="12"
-                                            Background="Transparent"
-                                            BorderThickness="0"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Visibility="{x:Bind CopyVisibility}"
-                                            Click="CopyMessage_Click" />
+                                    <StackPanel Orientation="Horizontal" Spacing="2">
+                                        <Button Padding="6,2"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                ToolTipService.ToolTip="Copy"
+                                                Visibility="{x:Bind CopyVisibility, Mode=OneWay}"
+                                                Click="CopyMessage_Click">
+                                            <FontIcon FontSize="14" Glyph="&#xE8C8;" />
+                                        </Button>
+                                        <Button Padding="6,2"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                ToolTipService.ToolTip="Regenerate response"
+                                                Visibility="{x:Bind RegenerateVisibility, Mode=OneWay}"
+                                                Click="Regenerate_Click">
+                                            <FontIcon FontSize="14" Glyph="&#xE72C;" />
+                                        </Button>
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
                         </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                </ItemsControl>
+            </Grid>
         </ScrollViewer>
 
         <!-- Input -->
-        <Grid Grid.Row="2" Padding="16" ColumnSpacing="8"
-              MaxWidth="900"
-              HorizontalAlignment="Stretch">
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MaxWidth="1260" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0" Padding="16" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-            <TextBox Grid.Column="0"
-                     x:Name="InputBox"
-                     PlaceholderText="Ask anything..."
-                     AcceptsReturn="False"
-                     TextWrapping="Wrap"
-                     MaxHeight="160"
-                     Text="{Binding Input, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Grid.Column="0"
+                         x:Name="InputBox"
+                         PlaceholderText="Ask anything..."
+                         AcceptsReturn="False"
+                         TextWrapping="Wrap"
+                         MaxHeight="160"
+                         Text="{Binding Input, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-            <Button Grid.Column="1"
-                    Content="➤"
-                    MinWidth="48"
-                    Command="{Binding SendCommand}"
-                    Visibility="{Binding IsGenerating, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                <Button Grid.Column="1"
+                        Content="➤"
+                        MinWidth="48"
+                        Command="{Binding SendCommand}"
+                        Visibility="{Binding IsGenerating, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
 
-            <Button Grid.Column="1"
-                    Content="■"
-                    MinWidth="48"
-                    Command="{Binding StopCommand}"
-                    Visibility="{Binding IsGenerating, Converter={StaticResource BoolToVisibility}}" />
+                <Button Grid.Column="1"
+                        Content="■"
+                        MinWidth="48"
+                        Command="{Binding StopCommand}"
+                        Visibility="{Binding IsGenerating, Converter={StaticResource BoolToVisibility}}" />
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>

@@ -8,6 +8,7 @@ public class Chat
     public string ModelId { get; set; } = "";
     public string ModelDisplayName { get; set; } = "";
     public bool SupportsTools { get; set; }
+    public bool IsPinned { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.Now;
     public List<StoredMessage> Messages { get; set; } = [];

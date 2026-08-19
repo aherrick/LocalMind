@@ -33,13 +33,24 @@ public partial class ChatMessageVM : ObservableObject
     public string TimeDisplay => Timestamp.ToLocalTime().ToString("MMM d, h:mm tt");
     public HorizontalAlignment Alignment => IsUser ? HorizontalAlignment.Right : HorizontalAlignment.Left;
     public Brush? Background => IsUser ? new SolidColorBrush(Windows.UI.Color.FromArgb(255, 50, 50, 50)) : null;
-    public Visibility CopyVisibility => IsUser ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility CopyVisibility => !IsUser && !string.IsNullOrEmpty(Text) ? Visibility.Visible : Visibility.Collapsed;
     public bool IsThinking => !IsUser && string.IsNullOrEmpty(Text);
+    public Visibility RegenerateVisibility => IsLast && !IsUser && !string.IsNullOrEmpty(Text) ? Visibility.Visible : Visibility.Collapsed;
 
     [ObservableProperty]
     public partial string Text { get; set; }
 
-    partial void OnTextChanged(string value) => OnPropertyChanged(nameof(IsThinking));
+    [ObservableProperty]
+    public partial bool IsLast { get; set; }
+
+    partial void OnTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsThinking));
+        OnPropertyChanged(nameof(CopyVisibility));
+        OnPropertyChanged(nameof(RegenerateVisibility));
+    }
+
+    partial void OnIsLastChanged(bool value) => OnPropertyChanged(nameof(RegenerateVisibility));
 }
 
 public partial class ChatViewModel : ObservableObject
@@ -65,6 +76,9 @@ public partial class ChatViewModel : ObservableObject
 
     [ObservableProperty]
     public partial string Title { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsPinned { get; set; }
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
@@ -109,12 +123,14 @@ public partial class ChatViewModel : ObservableObject
         Title = chat.Title;
         Input = "";
         ModelDisplay = "";
+        IsPinned = chat.IsPinned;
         IsModelLocked = chat.Messages.Count > 0;
         foreach (var m in chat.Messages)
             Messages.Add(new ChatMessageVM(ParseRole(m.Role), m.Text, m.Timestamp));
 
         UpdateModelDisplay();
         UpdateContext();
+        UpdateLastFlags();
     }
 
     private bool CanSend =>
@@ -129,8 +145,18 @@ public partial class ChatViewModel : ObservableObject
             _ = LoadModelAsync(value.ProviderId, value.Id);
     }
 
+    partial void OnIsPinnedChanged(bool value)
+    {
+        Model.IsPinned = value;
+        _store.Save(Model);
+    }
+
     public Task LoadSavedModelAsync()
         => IsModelLocked ? LoadModelAsync(Model.ProviderId, Model.ModelId) : Task.CompletedTask;
+
+    public bool Matches(string query)
+        => Title.Contains(query, StringComparison.OrdinalIgnoreCase)
+        || Messages.Any(m => m.Text.Contains(query, StringComparison.OrdinalIgnoreCase));
 
     private async Task LoadModelAsync(string providerId, string modelId)
     {
@@ -183,8 +209,25 @@ public partial class ChatViewModel : ObservableObject
         }
 
         Persist();
+        await GenerateAsync();
+    }
 
+    [RelayCommand]
+    private async Task RegenerateAsync()
+    {
+        if (IsGenerating || IsModelLoading || Messages.Count == 0 || Messages[^1].IsUser)
+            return;
+
+        Messages.RemoveAt(Messages.Count - 1);
+        UpdateLastFlags();
+        Persist();
+        await GenerateAsync();
+    }
+
+    private async Task GenerateAsync()
+    {
         IsGenerating = true;
+        UpdateLastFlags();
         _cts = new CancellationTokenSource();
         var assistant = new ChatMessageVM(MessageRole.Assistant, "", DateTimeOffset.Now);
         Messages.Add(assistant);
@@ -224,11 +267,18 @@ public partial class ChatViewModel : ObservableObject
             IsGenerating = false;
             _cts?.Dispose();
             _cts = null;
+            UpdateLastFlags();
             Persist();
             UpdateContext();
             if (!_isWindowVisible())
                 _notifications.Show("Response ready", Title);
         }
+    }
+
+    private void UpdateLastFlags()
+    {
+        for (int i = 0; i < Messages.Count; i++)
+            Messages[i].IsLast = i == Messages.Count - 1 && !IsGenerating;
     }
 
     [RelayCommand]

@@ -15,6 +15,7 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
         ("phi-4-mini", "Phi-4 Mini"),
         ("qwen2.5-1.5b", "Qwen2.5 1.5B"),
         ("phi-3.5-mini", "Phi-3.5 Mini"),
+        ("deepseek-r1-7b", "DeepSeek R1 7B"),
     ];
 
     private readonly SemaphoreSlim _initGate = new(1, 1);
