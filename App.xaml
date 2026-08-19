@@ -10,7 +10,8 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
                 <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
-            <!-- Other app resources here -->
+            <local:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+            <local:NotBoolConverter x:Key="NotBoolConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
