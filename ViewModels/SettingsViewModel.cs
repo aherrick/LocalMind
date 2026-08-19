@@ -69,6 +69,8 @@ public partial class SettingsViewModel : ObservableObject
 
     public event Action<string>? ModelReady;
 
+    private bool _refreshing;
+
     public SettingsViewModel(FoundryLocalProvider foundry, OllamaProvider ollama)
     {
         _ollama = ollama;
@@ -79,20 +81,41 @@ public partial class SettingsViewModel : ObservableObject
 
     public async Task RefreshAsync()
     {
-        foreach (var vm in FoundryModels)
-            await vm.RefreshAsync();
+        if (_refreshing)
+            return;
+        _refreshing = true;
+        try
+        {
+            foreach (var vm in FoundryModels)
+                await vm.RefreshAsync();
 
-        if (await Task.Run(() => _ollama.IsAvailableAsync()))
-        {
-            OllamaModels.Clear();
-            foreach (var m in await Task.Run(() => _ollama.GetModelsAsync()))
-                OllamaModels.Add(m.DisplayName);
-            OllamaStatus = "Connected";
+            var models = await Task.Run(() => _ollama.TryGetModelsAsync());
+            if (models is null)
+            {
+                OllamaStatus = "Not detected";
+                OllamaModels.Clear();
+            }
+            else
+            {
+                OllamaStatus = "Connected";
+                SyncOllamaModels(models.Select(m => m.DisplayName));
+            }
         }
-        else
+        finally
         {
-            OllamaModels.Clear();
-            OllamaStatus = "Not detected";
+            _refreshing = false;
         }
+    }
+
+    // Only mutate the collection when it actually changed, to avoid rebuilding the list (flicker).
+    private void SyncOllamaModels(IEnumerable<string> names)
+    {
+        var incoming = names.ToList();
+        if (OllamaModels.SequenceEqual(incoming))
+            return;
+
+        OllamaModels.Clear();
+        foreach (var name in incoming)
+            OllamaModels.Add(name);
     }
 }

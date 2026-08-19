@@ -11,7 +11,7 @@ public sealed class OllamaProvider : ILocalModelProvider
     public string Id => "ollama";
     public string DisplayName => "Ollama";
 
-    public async Task<IReadOnlyList<LocalModel>> GetModelsAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<LocalModel>?> TryGetModelsAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -23,23 +23,12 @@ public sealed class OllamaProvider : ILocalModelProvider
         }
         catch
         {
-            return [];
+            return null;
         }
     }
 
-    public async Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var ollama = new OllamaApiClient(Endpoint);
-            await ollama.ListLocalModelsAsync(cancellationToken);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
+    public async Task<IReadOnlyList<LocalModel>> GetModelsAsync(CancellationToken cancellationToken = default)
+        => await TryGetModelsAsync(cancellationToken) ?? [];
 
     public Task<IChatClient> CreateChatClientAsync(string modelId, CancellationToken cancellationToken = default)
         => Task.FromResult<IChatClient>(new OllamaApiClient(Endpoint, modelId));
