@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using LocalMind.Models;
 using LocalMind.Providers;
 using LocalMind.Services;
+using LocalMind.Tools;
 using Microsoft.Extensions.AI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
@@ -38,6 +39,11 @@ public partial class ChatMessageVM : ObservableObject
 public partial class ChatViewModel : ObservableObject
 {
     private const int ContextWindow = 32768;
+
+    private static readonly ChatOptions ToolOptions = new()
+    {
+        Tools = [AIFunctionFactory.Create(LocalTools.GetCurrentDateTime)],
+    };
 
     private readonly IReadOnlyList<ILocalModelProvider> _providers;
     private readonly ChatStore _store;
@@ -129,7 +135,8 @@ public partial class ChatViewModel : ObservableObject
         try
         {
             var provider = _providers.First(p => p.Id == providerId);
-            _client = await Task.Run(() => provider.CreateChatClientAsync(modelId));
+            var client = await Task.Run(() => provider.CreateChatClientAsync(modelId));
+            _client = client.AsBuilder().UseFunctionInvocation().Build();
         }
         catch
         {
@@ -155,6 +162,7 @@ public partial class ChatViewModel : ObservableObject
             Model.ProviderId = SelectedModel.ProviderId;
             Model.ModelId = SelectedModel.Id;
             Model.ModelDisplayName = SelectedModel.DisplayName;
+            Model.SupportsTools = SelectedModel.SupportsTools;
             IsModelLocked = true;
             UpdateModelDisplay();
         }
@@ -186,7 +194,8 @@ public partial class ChatViewModel : ObservableObject
                 .Select(m => new ChatMessage(m.IsUser ? ChatRole.User : ChatRole.Assistant, m.Text))
                 .ToList();
 
-            await foreach (var update in _client.GetStreamingResponseAsync(history, null, _cts.Token))
+            var options = Model.SupportsTools ? ToolOptions : null;
+            await foreach (var update in _client.GetStreamingResponseAsync(history, options, _cts.Token))
             {
                 if (!string.IsNullOrEmpty(update.Text))
                 {

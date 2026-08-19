@@ -1,11 +1,9 @@
-using System.Runtime.CompilerServices;
-using System.Text;
+using System.ClientModel;
 using LocalMind.Models;
 using Microsoft.AI.Foundry.Local;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
-using AIChatMessage = Microsoft.Extensions.AI.ChatMessage;
-using BChatMessage = Betalgo.Ranul.OpenAI.ObjectModels.RequestModels.ChatMessage;
+using OpenAI;
 
 namespace LocalMind.Providers;
 
@@ -21,6 +19,7 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
 
     private readonly SemaphoreSlim _initGate = new(1, 1);
     private ICatalog? _catalog;
+    private string? _baseUrl;
 
     public string Id => "foundry";
     public string DisplayName => "Foundry Local";
@@ -36,8 +35,15 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
             if (_catalog is null)
             {
                 if (!FoundryLocalManager.IsInitialized)
-                    await FoundryLocalManager.CreateAsync(new Configuration { AppName = "LocalMind" }, NullLogger.Instance, ct);
+                    await FoundryLocalManager.CreateAsync(new Configuration
+                    {
+                        AppName = "LocalMind",
+                        Web = new Configuration.WebService { Urls = "http://127.0.0.1:0" }
+                    }, NullLogger.Instance, ct);
+
                 _catalog = await FoundryLocalManager.Instance.GetCatalogAsync(ct);
+                await FoundryLocalManager.Instance.StartWebServiceAsync(ct);
+                _baseUrl = (FoundryLocalManager.Instance.Urls ?? []).FirstOrDefault();
             }
         }
         finally
@@ -57,7 +63,10 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
             {
                 var model = await catalog.GetModelAsync(alias, cancellationToken);
                 if (model is not null && await model.IsCachedAsync(cancellationToken))
-                    ready.Add(new LocalModel(Id, DisplayName, alias, displayName));
+                    ready.Add(new LocalModel(Id, DisplayName, alias, displayName)
+                    {
+                        SupportsTools = model.Info.SupportsToolCalling ?? false
+                    });
             }
         }
         catch
@@ -94,48 +103,12 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
         var model = await catalog.GetModelAsync(modelId, cancellationToken)
             ?? throw new InvalidOperationException($"Model '{modelId}' is not available in the Foundry catalog.");
         await model.LoadAsync(cancellationToken);
-        var inner = await model.GetChatClientAsync(cancellationToken);
-        return new FoundryChatClient(inner);
+
+        if (_baseUrl is null)
+            throw new InvalidOperationException("Foundry Local web service is not available.");
+
+        // Foundry Local exposes an OpenAI-compatible endpoint; the local service needs no real API key.
+        var client = new OpenAIClient(new ApiKeyCredential("not-needed"), new OpenAIClientOptions { Endpoint = new Uri(_baseUrl.TrimEnd('/') + "/v1") });
+        return client.GetChatClient(model.Id).AsIChatClient();
     }
-}
-
-internal sealed class FoundryChatClient(OpenAIChatClient inner) : IChatClient
-{
-    public async Task<ChatResponse> GetResponseAsync(
-        IEnumerable<AIChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
-    {
-        var sb = new StringBuilder();
-        await foreach (var update in GetStreamingResponseAsync(messages, options, cancellationToken))
-            sb.Append(update.Text);
-        return new ChatResponse(new AIChatMessage(ChatRole.Assistant, sb.ToString()));
-    }
-
-    public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
-        IEnumerable<AIChatMessage> messages, ChatOptions? options = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        var mapped = messages.Select(Map).ToList();
-        await foreach (var chunk in inner.CompleteChatStreamingAsync(mapped, cancellationToken))
-        {
-            var choice = chunk.Choices?.FirstOrDefault();
-            var text = choice?.Delta?.Content ?? choice?.Message?.Content;
-            if (!string.IsNullOrEmpty(text))
-                yield return new ChatResponseUpdate(ChatRole.Assistant, text);
-        }
-    }
-
-    private static BChatMessage Map(AIChatMessage m)
-    {
-        var text = m.Text ?? string.Empty;
-        if (m.Role == ChatRole.System)
-            return BChatMessage.FromSystem(text);
-        if (m.Role == ChatRole.Assistant)
-            return BChatMessage.FromAssistant(text);
-        return BChatMessage.FromUser(text);
-    }
-
-    public object? GetService(Type serviceType, object? serviceKey = null)
-        => serviceKey is null && serviceType?.IsInstanceOfType(this) == true ? this : null;
-
-    public void Dispose() { }
 }

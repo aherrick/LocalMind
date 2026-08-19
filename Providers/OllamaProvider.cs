@@ -17,9 +17,20 @@ public sealed class OllamaProvider : ILocalModelProvider
         {
             var ollama = new OllamaApiClient(Endpoint);
             var models = await ollama.ListLocalModelsAsync(cancellationToken);
-            return models
-                .Select(m => new LocalModel(Id, DisplayName, m.Name, m.Name))
-                .ToList();
+            var mapped = await Task.WhenAll(models.Select(async m =>
+            {
+                var supportsTools = false;
+                try
+                {
+                    var info = await ollama.ShowModelAsync(m.Name, cancellationToken);
+                    supportsTools = info.Capabilities?.Any(c => c.Equals("tools", StringComparison.OrdinalIgnoreCase)) ?? false;
+                }
+                catch
+                {
+                }
+                return new LocalModel(Id, DisplayName, m.Name, m.Name) { SupportsTools = supportsTools };
+            }));
+            return mapped;
         }
         catch
         {
