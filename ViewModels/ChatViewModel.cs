@@ -125,7 +125,9 @@ public partial class ChatViewModel : ObservableObject
         IsModelLocked = chat.Messages.Count > 0;
         foreach (var m in chat.Messages)
         {
-            Messages.Add(new ChatMessageVM(ParseRole(m.Role), m.Text, m.Timestamp));
+            var role = ParseRole(m.Role);
+            var text = role == MessageRole.Assistant ? ThinkingTextFilter.Remove(m.Text) : m.Text;
+            Messages.Add(new ChatMessageVM(role, text, m.Timestamp));
         }
 
         UpdateModelDisplay();
@@ -243,6 +245,7 @@ public partial class ChatViewModel : ObservableObject
         UpdateLastFlags();
         _cts = new CancellationTokenSource();
         var assistant = new ChatMessageVM(MessageRole.Assistant, "", DateTimeOffset.Now);
+        var thinkingFilter = new ThinkingTextFilter();
         Messages.Add(assistant);
         try
         {
@@ -269,8 +272,12 @@ public partial class ChatViewModel : ObservableObject
             {
                 if (!string.IsNullOrEmpty(update.Text))
                 {
-                    assistant.Text += update.Text;
-                    UpdateContext();
+                    var visibleText = thinkingFilter.Append(update.Text);
+                    if (visibleText.Length > 0)
+                    {
+                        assistant.Text += visibleText;
+                        UpdateContext();
+                    }
                 }
             }
         }
