@@ -37,6 +37,7 @@
                 <MenuFlyout>
                     <MenuFlyoutItem Text="Open" Click="TrayOpen_Click" />
                     <MenuFlyoutItem Text="New Chat" Command="{Binding NewChatCommand}" />
+                    <ToggleMenuFlyoutItem Text="Run at startup" IsChecked="{Binding Settings.RunAtStartup, Mode=TwoWay}" />
                     <MenuFlyoutItem Text="Check for Updates" Command="{Binding CheckForUpdatesCommand}" />
                     <MenuFlyoutItem Text="Exit" Click="TrayExit_Click" />
                 </MenuFlyout>

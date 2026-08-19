@@ -2,7 +2,6 @@
 using LocalMind.Services;
 using LocalMind.ViewModels;
 using Microsoft.UI.Xaml;
-using Velopack;
 
 namespace LocalMind;
 
@@ -12,7 +11,6 @@ public partial class App : Application
 
     public App()
     {
-        VelopackApp.Build().Run();
         InitializeComponent();
     }
 

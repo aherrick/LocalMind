@@ -83,6 +83,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     public partial bool StartMinimized { get; set; }
 
+    [ObservableProperty]
+    public partial bool RunAtStartup { get; set; }
+
     public event Action<string> ModelReady;
     public event Action<string> ThemeChanged;
 
@@ -96,6 +99,7 @@ public partial class SettingsViewModel : ObservableObject
         SystemPrompt = _settings.SystemPrompt;
         Theme = _settings.Theme;
         StartMinimized = _settings.StartMinimized;
+        RunAtStartup = StartupManager.IsEnabled();
         OllamaStatus = "Checking…";
         foreach (var (alias, displayName) in FoundryLocalProvider.Curated)
         {
@@ -122,6 +126,16 @@ public partial class SettingsViewModel : ObservableObject
     {
         _settings.StartMinimized = value;
         Save();
+    }
+
+    partial void OnRunAtStartupChanged(bool value)
+    {
+        if (StartupManager.IsEnabled() == value)
+        {
+            return;
+        }
+
+        StartupManager.Set(value);
     }
 
     public async Task Refresh()
