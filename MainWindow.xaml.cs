@@ -59,9 +59,15 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
 
     private void ShowFromTray()
     {
-        H.NotifyIcon.WindowExtensions.Show(this);
-        _isVisible = true;
-        Activate();
+        TrayIcon.CloseContextMenu();
+        // Flyout still owns focus until this click finishes; restore on the next tick.
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            H.NotifyIcon.WindowExtensions.Show(this);
+            _isVisible = true;
+            Activate();
+            this.BringToFront();
+        });
     }
 
     private async void DeleteChat_Click(object sender, RoutedEventArgs e)
