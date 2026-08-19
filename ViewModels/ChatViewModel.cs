@@ -10,19 +10,26 @@ using Microsoft.UI.Xaml.Media;
 
 namespace LocalMind.ViewModels;
 
+public enum MessageRole
+{
+    User,
+    Assistant,
+}
+
 public partial class ChatMessageVM : ObservableObject
 {
-    public ChatMessageVM(string role, string text)
+    public ChatMessageVM(MessageRole role, string text)
     {
         Role = role;
         Text = text;
     }
 
-    public string Role { get; }
-    public bool IsUser => Role == "user";
-    public string Header => IsUser ? "User" : "Assistant";
+    public MessageRole Role { get; }
+    public bool IsUser => Role == MessageRole.User;
+    public string Header => Role.ToString();
     public HorizontalAlignment Alignment => IsUser ? HorizontalAlignment.Right : HorizontalAlignment.Left;
     public Brush? Background => IsUser ? new SolidColorBrush(Windows.UI.Color.FromArgb(255, 50, 50, 50)) : null;
+    public Visibility CopyVisibility => IsUser ? Visibility.Collapsed : Visibility.Visible;
 
     [ObservableProperty]
     public partial string Text { get; set; }
@@ -92,7 +99,7 @@ public partial class ChatViewModel : ObservableObject
         ModelDisplay = "";
         IsModelLocked = chat.Messages.Count > 0;
         foreach (var m in chat.Messages)
-            Messages.Add(new ChatMessageVM(m.Role, m.Text));
+            Messages.Add(new ChatMessageVM(ParseRole(m.Role), m.Text));
 
         UpdateModelDisplay();
         UpdateContext();
@@ -153,7 +160,7 @@ public partial class ChatViewModel : ObservableObject
         }
 
         Input = "";
-        Messages.Add(new ChatMessageVM("user", text));
+        Messages.Add(new ChatMessageVM(MessageRole.User, text));
 
         if (Messages.Count == 1)
         {
@@ -165,7 +172,7 @@ public partial class ChatViewModel : ObservableObject
 
         IsGenerating = true;
         _cts = new CancellationTokenSource();
-        var assistant = new ChatMessageVM("assistant", "");
+        var assistant = new ChatMessageVM(MessageRole.Assistant, "");
         Messages.Add(assistant);
         try
         {
@@ -215,11 +222,14 @@ public partial class ChatViewModel : ObservableObject
     private void Persist()
     {
         Model.Messages = Messages
-            .Select(m => new StoredMessage { Role = m.Role, Text = m.Text })
+            .Select(m => new StoredMessage { Role = m.Role.ToString(), Text = m.Text })
             .ToList();
         Model.UpdatedAt = DateTimeOffset.Now;
         _store.Save(Model);
     }
+
+    private static MessageRole ParseRole(string role)
+        => Enum.TryParse<MessageRole>(role, ignoreCase: true, out var parsed) ? parsed : MessageRole.Assistant;
 
     private void UpdateModelDisplay()
     {

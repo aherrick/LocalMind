@@ -5,6 +5,7 @@ using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using Windows.UI.Core;
 
@@ -62,7 +63,25 @@ public sealed partial class ChatView : UserControl
     }
 
     private void ScrollToBottom()
-        => DispatcherQueue.TryEnqueue(() => MessagesScroll.ChangeView(null, MessagesScroll.ScrollableHeight, null));
+        => DispatcherQueue.TryEnqueue(() =>
+        {
+            MessagesScroll.UpdateLayout();
+            MessagesScroll.ChangeView(null, MessagesScroll.ScrollableHeight, null, disableAnimation: true);
+        });
+
+    private async void CopyMessage_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: ChatMessageVM message } button)
+            return;
+
+        var package = new DataPackage();
+        package.SetText(message.Text);
+        Clipboard.SetContent(package);
+
+        button.Content = "Copied";
+        await Task.Delay(1500);
+        button.Content = "Copy";
+    }
 
     private void InputBox_KeyDown(object sender, KeyRoutedEventArgs e)
     {

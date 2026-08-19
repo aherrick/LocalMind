@@ -41,6 +41,13 @@ namespace LocalMind
             Activate();
         }
 
+        private async void DeleteChat_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement { DataContext: ChatViewModel chat } && Root.DataContext is MainViewModel vm
+                && await Dialogs.ConfirmAsync(Content.XamlRoot, "Delete chat?", "This can't be undone."))
+                vm.DeleteChatCommand.Execute(chat);
+        }
+
         private void TrayOpen_Click(object sender, RoutedEventArgs e) => ShowFromTray();
 
         private void TrayExit_Click(object sender, RoutedEventArgs e)

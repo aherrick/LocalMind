@@ -39,13 +39,12 @@
         </tb:TaskbarIcon>
 
         <!-- Sidebar -->
-        <Grid Grid.Column="0" Padding="12" RowSpacing="8"
+        <Grid Grid.Column="0" Padding="16" RowSpacing="8"
               Background="{ThemeResource LayerFillColorDefaultBrush}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
@@ -84,29 +83,27 @@
                                     Content="✕"
                                     Background="Transparent"
                                     BorderThickness="0"
-                                    Command="{Binding DataContext.DeleteChatCommand, ElementName=Root}"
-                                    CommandParameter="{Binding}" />
+                                    Click="DeleteChat_Click" />
                         </Grid>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
 
-            <Button Grid.Row="3"
-                    HorizontalAlignment="Stretch"
-                    Content="Settings"
-                    Command="{Binding OpenSettingsCommand}" />
+            <StackPanel Grid.Row="3" Spacing="8">
+                <InfoBar Visibility="{Binding UpdateReady, Converter={StaticResource BoolToVisibility}}"
+                         IsOpen="{Binding UpdateReady}"
+                         IsClosable="False"
+                         Severity="Success"
+                         Title="Update ready">
+                    <InfoBar.ActionButton>
+                        <Button Content="Restart" Command="{Binding RestartForUpdateCommand}" />
+                    </InfoBar.ActionButton>
+                </InfoBar>
 
-            <InfoBar Grid.Row="4"
-                     Margin="0,8,0,0"
-                     Visibility="{Binding UpdateReady, Converter={StaticResource BoolToVisibility}}"
-                     IsOpen="{Binding UpdateReady}"
-                     IsClosable="False"
-                     Severity="Success"
-                     Title="Update ready">
-                <InfoBar.ActionButton>
-                    <Button Content="Restart" Command="{Binding RestartForUpdateCommand}" />
-                </InfoBar.ActionButton>
-            </InfoBar>
+                <Button HorizontalAlignment="Stretch"
+                        Content="Settings"
+                        Command="{Binding OpenSettingsCommand}" />
+            </StackPanel>
         </Grid>
 
         <!-- Content -->
