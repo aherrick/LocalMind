@@ -68,6 +68,7 @@ public partial class ChatViewModel : ObservableObject
     public Chat Model { get; }
     public ObservableCollection<ChatMessageVM> Messages { get; } = [];
     public ObservableCollection<LocalModel> ReadyModels { get; }
+    public event Action<ChatViewModel> Started;
 
     [ObservableProperty]
     public partial string Title { get; set; }
@@ -207,13 +208,18 @@ public partial class ChatViewModel : ObservableObject
         Input = "";
         Messages.Add(new ChatMessageVM(MessageRole.User, text, DateTimeOffset.Now));
 
-        if (Messages.Count == 1)
+        var isFirstMessage = Messages.Count == 1;
+        if (isFirstMessage)
         {
             Title = MakeTitle(text);
             Model.Title = Title;
         }
 
         Persist();
+        if (isFirstMessage)
+        {
+            Started?.Invoke(this);
+        }
         await Generate();
     }
 

@@ -90,7 +90,30 @@ public partial class MainViewModel : ObservableObject
     }
 
     private ChatViewModel CreateChatViewModel(Chat chat)
-        => new(chat, _providers, _store, _notifications, _isWindowVisible, ReadyModels, Settings);
+    {
+        var viewModel = new ChatViewModel(
+            chat, _providers, _store, _notifications, _isWindowVisible, ReadyModels, Settings);
+        viewModel.Started += AddStartedChat;
+        return viewModel;
+    }
+
+    private void AddStartedChat(ChatViewModel chat)
+    {
+        if (_all.Contains(chat))
+        {
+            return;
+        }
+
+        _all.Insert(0, chat);
+        Refilter();
+        _dispatcher.TryEnqueue(() =>
+        {
+            if (ReferenceEquals(SelectedChat, chat))
+            {
+                OnPropertyChanged(nameof(SelectedChat));
+            }
+        });
+    }
 
     public async Task RefreshReadyModels()
     {
@@ -111,12 +134,10 @@ public partial class MainViewModel : ObservableObject
     public void NewChat()
     {
         var chat = CreateChatViewModel(new Chat());
-        _all.Insert(0, chat);
         SearchText = "";
         Refilter();
         IsSettingsOpen = false;
-        // Defer so the freshly inserted row is realized before it becomes the selection.
-        _dispatcher.TryEnqueue(() => SelectedChat = chat);
+        SelectedChat = chat;
     }
 
     partial void OnSelectedChatChanged(ChatViewModel value)
