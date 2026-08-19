@@ -26,6 +26,9 @@
 
         <tb:TaskbarIcon x:Name="TrayIcon"
                         ToolTipText="LocalMind"
+                        NoLeftClickDelay="True"
+                        PopupActivation="None"
+                        MenuActivation="RightClick"
                         LeftClickCommand="{x:Bind ShowFromTrayCommand}">
             <tb:TaskbarIcon.IconSource>
                 <tb:GeneratedIconSource Text="LM" />
