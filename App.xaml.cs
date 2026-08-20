@@ -7,7 +7,7 @@ namespace LocalMind;
 
 public partial class App : Application
 {
-    private MainWindow _window;
+    private static MainWindow _window;
 
     public App()
     {
@@ -17,6 +17,8 @@ public partial class App : Application
 
     private static void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
         => AppLog.Error("Unhandled XAML exception.", e.Exception);
+
+    internal static void ActivateExistingWindow() => _window?.ShowFromActivation();
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {

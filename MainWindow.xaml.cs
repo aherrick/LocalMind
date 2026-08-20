@@ -28,6 +28,8 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
 
     private static ChatViewModel ChatOf(object sender) => (sender as FrameworkElement)?.DataContext as ChatViewModel;
 
+    public void ShowFromActivation() => ShowFromTray();
+
     public void SetViewModel(MainViewModel viewModel)
     {
         Root.DataContext = viewModel;

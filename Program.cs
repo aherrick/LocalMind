@@ -16,6 +16,19 @@ internal static class Program
         // operations too, which is what crashed the XAML runtime (0xc000027b) when this lived in App's ctor.
         VelopackApp.Build().Run();
 
+        using var activationEvent = new EventWaitHandle(false, EventResetMode.AutoReset, "LocalMind.Activate");
+        using var instanceMutex = new Mutex(initiallyOwned: false, "LocalMind", out var isFirstInstance);
+        if (!isFirstInstance)
+        {
+            // Another instance already owns the app; wake it and exit.
+            activationEvent.Set();
+            return;
+        }
+
+        // Wake the existing window on later launches without parking a dedicated blocked thread.
+        ThreadPool.RegisterWaitForSingleObject(
+            activationEvent, (_, _) => App.ActivateExistingWindow(), null, Timeout.Infinite, executeOnlyOnce: false);
+
         AppLog.Initialize();
         AppLog.Info($"Log directory: {AppLog.DirectoryPath}");
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
