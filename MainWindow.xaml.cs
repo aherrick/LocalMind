@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.Input;
 using LocalMind.Services;
 using LocalMind.ViewModels;
 using LocalMind.Views;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Storage.Pickers;
@@ -115,14 +116,23 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
     [RelayCommand]
     private void ShowFromTray()
         // The flyout still owns focus until this click finishes; restore on the next tick.
-        => OnUiThread(() =>
+        => OnUiThread(ShowFromTrayCore);
+
+    private void ShowFromTrayCore()
+    {
+        TrayIcon.CloseContextMenu();
+        if (AppWindow.Presenter is OverlappedPresenter
+            {
+                State: OverlappedPresenterState.Minimized,
+            } presenter)
         {
-            TrayIcon.CloseContextMenu();
-            H.NotifyIcon.WindowExtensions.Show(this);
-            _isVisible = true;
-            Activate();
-            this.BringToFront();
-        });
+            presenter.Restore(false);
+        }
+        H.NotifyIcon.EfficiencyMode.EfficiencyModeUtilities.SetEfficiencyMode(false);
+        AppWindow.Show(true);
+        _isVisible = true;
+        this.BringToFront();
+    }
 
     private async void DeleteChat_Click(object sender, RoutedEventArgs e)
     {
@@ -212,7 +222,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
             if (ViewModel is { } vm)
             {
                 vm.NewChatCommand.Execute(null);
-                ShowFromTray();
+                ShowFromTrayCore();
             }
         });
 
@@ -237,7 +247,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         => OnUiThread(() =>
         {
             // Surface the window first so the result dialog is visible when launched from the tray.
-            ShowFromTray();
+            ShowFromTrayCore();
             ViewModel?.CheckForUpdatesCommand.Execute(null);
         });
 
