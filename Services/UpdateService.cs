@@ -1,11 +1,10 @@
 using Velopack;
+using Velopack.Sources;
 
 namespace LocalMind.Services;
 
 public sealed class UpdateService
 {
-    private const string UpdateUrl = "https://github.com/aherrick/LocalMind/releases/latest/download";
-
     private UpdateManager _manager;
     private UpdateInfo _pending;
 
@@ -14,16 +13,13 @@ public sealed class UpdateService
 
     public async Task Check()
     {
-        if (string.IsNullOrWhiteSpace(UpdateUrl))
-        {
-            return;
-        }
-
         try
         {
-            _manager = new UpdateManager(UpdateUrl);
+            _manager = new UpdateManager(new GithubSource(AppInfo.RepositoryUrl, null, prerelease: false));
             if (!_manager.IsInstalled)
             {
+                // Velopack can only update an installed build, so dev/debug runs no-op here.
+                AppLog.Info("Update check skipped: app is not installed via Velopack.");
                 return;
             }
 
