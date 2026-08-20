@@ -185,7 +185,7 @@ public partial class SettingsViewModel : ObservableObject
     // Only mutate the collection when it actually changed, to avoid rebuilding the list (flicker).
     private void SyncOllamaModels(IEnumerable<string> names)
     {
-        var incoming = names.ToList();
+        List<string> incoming = [.. names];
         if (OllamaModels.SequenceEqual(incoming))
         {
             return;

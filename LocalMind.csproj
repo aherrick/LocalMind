@@ -12,8 +12,8 @@
     <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
-      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-      <NoWarn>$(NoWarn);CS0618;WMC1509</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CS0618;WMC1509</NoWarn>
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <SelfContained>true</SelfContained>
@@ -28,7 +28,7 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.MarkdownTextBlock" Version="0.1.251217-build.2433" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-      <PackageReference Include="FluentIcons.WinUI" Version="2.2.337" />
+    <PackageReference Include="FluentIcons.WinUI" Version="2.2.337" />
     <PackageReference Include="H.NotifyIcon.WinUI" Version="2.5.0-dev.2" />
     <PackageReference Include="Microsoft.AI.Foundry.Local.WinML" Version="1.2.4" />
     <PackageReference Include="Microsoft.Extensions.AI" Version="10.9.0" />

@@ -28,9 +28,9 @@
                       HorizontalContentAlignment="Stretch"
                       HorizontalScrollBarVisibility="Disabled"
                       VerticalScrollBarVisibility="Auto">
-                <Grid HorizontalAlignment="Stretch"
-                  ColumnSpacing="20"
-                  RowSpacing="16">
+            <Grid HorizontalAlignment="Stretch"
+                ColumnSpacing="20"
+                RowSpacing="16">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
@@ -183,7 +183,7 @@
                         </Border>
                     </StackPanel>
                 </StackPanel>
-                </Grid>
+            </Grid>
         </ScrollViewer>
     </ContentControl>
 </UserControl>

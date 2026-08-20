@@ -100,6 +100,47 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         sibling.SelectedItem = null;
     }
 
+    private void TrayNewChat_Click(object sender, RoutedEventArgs e)
+    {
+        if (Root.DataContext is MainViewModel vm)
+        {
+            vm.NewChatCommand.Execute(null);
+            ShowFromTray();
+        }
+    }
+
+    private void TrayOpenLogs_Click(object sender, RoutedEventArgs e)
+    {
+        if (Root.DataContext is MainViewModel vm)
+        {
+            vm.Settings.OpenLogsCommand.Execute(null);
+        }
+    }
+
+    private void TrayContextFlyout_Opening(object sender, object e)
+    {
+        if (Root.DataContext is MainViewModel vm)
+        {
+            TrayRunAtStartup.IsChecked = vm.Settings.RunAtStartup;
+        }
+    }
+
+    private void TrayRunAtStartup_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is ToggleMenuFlyoutItem { IsChecked: bool isChecked } && Root.DataContext is MainViewModel vm)
+        {
+            vm.Settings.RunAtStartup = isChecked;
+        }
+    }
+
+    private void TrayCheckForUpdates_Click(object sender, RoutedEventArgs e)
+    {
+        if (Root.DataContext is MainViewModel vm)
+        {
+            vm.CheckForUpdatesCommand.Execute(null);
+        }
+    }
+
     private void TrayExit_Click(object sender, RoutedEventArgs e)
     {
         _forceClose = true;

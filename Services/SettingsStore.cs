@@ -7,14 +7,22 @@ public sealed class SettingsStore
 {
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
 
+    private readonly string _dir = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "LocalMind");
     private readonly string _path = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "LocalMind", "settings.json");
 
-    public SettingsStore() => Directory.CreateDirectory(Path.GetDirectoryName(_path));
+    public SettingsStore() => Directory.CreateDirectory(_dir);
 
     public AppSettings Load()
     {
+        if (!File.Exists(_path))
+        {
+            return new AppSettings();
+        }
+
         try
         {
             return JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(_path), Options) ?? new AppSettings();

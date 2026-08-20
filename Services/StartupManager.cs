@@ -24,7 +24,7 @@ internal static class StartupManager
         if (enabled)
         {
             // Point at Velopack's Update.exe so the entry survives version updates; fall back to the exe when unpackaged.
-            var updateExe = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(Environment.ProcessPath), "..", "Update.exe"));
+            var updateExe = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "Update.exe"));
             var command = File.Exists(updateExe) ? $"\"{updateExe}\" start" : $"\"{Environment.ProcessPath}\"";
             key.SetValue(ValueName, command);
         }
