@@ -37,9 +37,11 @@
                 <MenuFlyout Opening="TrayContextFlyout_Opening">
                     <MenuFlyoutItem Text="Open" Command="{x:Bind ShowFromTrayCommand}" />
                     <MenuFlyoutItem Text="New Chat" Click="TrayNewChat_Click" />
-                    <MenuFlyoutItem Text="Open Logs" Click="TrayOpenLogs_Click" />
+                    <MenuFlyoutSeparator />
                     <ToggleMenuFlyoutItem x:Name="TrayRunAtStartup" Text="Run at startup" Click="TrayRunAtStartup_Click" />
                     <MenuFlyoutItem Text="Check for Updates" Click="TrayCheckForUpdates_Click" />
+                    <MenuFlyoutItem Text="Open logs folder" Click="TrayOpenLogs_Click" />
+                    <MenuFlyoutSeparator />
                     <MenuFlyoutItem Text="Exit" Click="TrayExit_Click" />
                 </MenuFlyout>
             </tb:TaskbarIcon.ContextFlyout>
