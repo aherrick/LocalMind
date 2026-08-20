@@ -112,6 +112,9 @@ public partial class SettingsViewModel : ObservableObject
     public partial bool StartMinimized { get; set; }
 
     [ObservableProperty]
+    public partial bool MinimizeToTrayOnClose { get; set; }
+
+    [ObservableProperty]
     public partial bool RunAtStartup { get; set; }
 
     public event Action<string> ModelReady;
@@ -128,6 +131,7 @@ public partial class SettingsViewModel : ObservableObject
         SystemPrompt = _settings.SystemPrompt;
         Theme = _settings.Theme;
         StartMinimized = _settings.StartMinimized;
+        MinimizeToTrayOnClose = _settings.MinimizeToTrayOnClose;
         RunAtStartup = StartupManager.IsEnabled();
         OllamaStatus = "Checking…";
         foreach (var (alias, displayName) in FoundryLocalProvider.Curated)
@@ -156,6 +160,12 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnStartMinimizedChanged(bool value)
     {
         _settings.StartMinimized = value;
+        Save();
+    }
+
+    partial void OnMinimizeToTrayOnCloseChanged(bool value)
+    {
+        _settings.MinimizeToTrayOnClose = value;
         Save();
     }
 

@@ -88,9 +88,17 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
             return;
         }
 
-        args.Cancel = true;
-        H.NotifyIcon.WindowExtensions.Hide(this);
-        _isVisible = false;
+        var minimizeToTray = ViewModel?.Settings.MinimizeToTrayOnClose ?? true;
+        if (minimizeToTray)
+        {
+            args.Cancel = true;
+            H.NotifyIcon.WindowExtensions.Hide(this);
+            _isVisible = false;
+        }
+        else
+        {
+            TrayIcon.Dispose();
+        }
     }
 
     [RelayCommand]

@@ -153,6 +153,22 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Close button minimizes to tray" />
+                                        <TextBlock Text="Turn off to exit LocalMind when you close the window." Style="{StaticResource SettingCaption}" />
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1"
+                                                  MinWidth="0"
+                                                  OnContent=""
+                                                  OffContent=""
+                                                  IsOn="{Binding MinimizeToTrayOnClose, Mode=TwoWay}" />
+                                </Grid>
+
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                         <TextBlock Text="Run at startup" />
                                         <TextBlock Text="Start LocalMind when you sign in to Windows." Style="{StaticResource SettingCaption}" />
                                     </StackPanel>
