@@ -31,18 +31,20 @@
                         MenuActivation="RightClick"
                         LeftClickCommand="{x:Bind ShowFromTrayCommand}">
             <tb:TaskbarIcon.IconSource>
-                <tb:GeneratedIconSource Text="LM" />
+                <BitmapImage UriSource="ms-appx:///Assets/localmind.png" />
             </tb:TaskbarIcon.IconSource>
             <tb:TaskbarIcon.ContextFlyout>
-                <MenuFlyout Opening="TrayContextFlyout_Opening">
+                <MenuFlyout>
+                    <MenuFlyoutItem Text="{x:Bind AppVersion}" Command="{x:Bind OpenRepositoryCommand}" />
+                    <MenuFlyoutSeparator />
                     <MenuFlyoutItem Text="Open" Command="{x:Bind ShowFromTrayCommand}" />
-                    <MenuFlyoutItem Text="New Chat" Click="TrayNewChat_Click" />
+                    <MenuFlyoutItem Text="New Chat" Command="{x:Bind NewChatFromTrayCommand}" />
                     <MenuFlyoutSeparator />
-                    <ToggleMenuFlyoutItem x:Name="TrayRunAtStartup" Text="Run at startup" Click="TrayRunAtStartup_Click" />
-                    <MenuFlyoutItem Text="Check for Updates" Click="TrayCheckForUpdates_Click" />
-                    <MenuFlyoutItem Text="Open logs folder" Click="TrayOpenLogs_Click" />
+                    <ToggleMenuFlyoutItem x:Name="TrayRunAtStartup" Text="Run at startup" Command="{x:Bind ToggleRunAtStartupCommand}" />
+                    <MenuFlyoutItem Text="Check for Updates" Command="{x:Bind CheckForUpdatesFromTrayCommand}" />
+                    <MenuFlyoutItem Text="Open logs folder" Command="{x:Bind OpenLogsCommand}" />
                     <MenuFlyoutSeparator />
-                    <MenuFlyoutItem Text="Exit" Click="TrayExit_Click" />
+                    <MenuFlyoutItem Text="Exit" Command="{x:Bind ExitAppCommand}" />
                 </MenuFlyout>
             </tb:TaskbarIcon.ContextFlyout>
         </tb:TaskbarIcon>
@@ -98,8 +100,6 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0"
                                        VerticalAlignment="Center"
@@ -111,29 +111,17 @@
                                     Padding="0"
                                     Background="Transparent"
                                     BorderThickness="0"
-                                    ToolTipService.ToolTip="Pin / Unpin"
-                                    Click="PinChat_Click">
-                                <icons:SymbolIcon FontSize="16" Symbol="Pin" />
-                            </Button>
-                            <Button Grid.Column="2"
-                                    Width="32"
-                                    Height="32"
-                                    Padding="0"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    ToolTipService.ToolTip="Export chat"
-                                    Click="ExportChat_Click">
-                                <icons:SymbolIcon FontSize="16" Symbol="ArrowDownload" />
-                            </Button>
-                            <Button Grid.Column="3"
-                                    Width="32"
-                                    Height="32"
-                                    Padding="0"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    ToolTipService.ToolTip="Delete chat"
-                                    Click="DeleteChat_Click">
-                                <icons:SymbolIcon FontSize="16" Symbol="Delete" />
+                                    ToolTipService.ToolTip="More options">
+                                <icons:SymbolIcon FontSize="16" Symbol="MoreHorizontal" />
+                                <Button.Flyout>
+                                    <MenuFlyout Opening="ChatMenu_Opening">
+                                        <MenuFlyoutItem Text="Rename" Click="RenameChat_Click" />
+                                        <MenuFlyoutItem Text="Pin / Unpin" Click="PinChat_Click" />
+                                        <MenuFlyoutItem Text="Export" Click="ExportChat_Click" />
+                                        <MenuFlyoutSeparator />
+                                        <MenuFlyoutItem Text="Delete" Click="DeleteChat_Click" />
+                                    </MenuFlyout>
+                                </Button.Flyout>
                             </Button>
                         </Grid>
                     </DataTemplate>

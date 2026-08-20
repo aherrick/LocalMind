@@ -1,4 +1,3 @@
-using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using LocalMind.Services;
 using LocalMind.ViewModels;
@@ -18,19 +17,28 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         InitializeComponent();
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
-        ShowFromTrayCommand = new RelayCommand(ShowFromTray);
+        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "localmind.ico"));
         AppWindow.Closing += OnClosing;
     }
 
-    public ICommand ShowFromTrayCommand { get; }
-
     public bool IsVisibleToUser => _isVisible;
+    public string AppVersion => $"LocalMind v{AppInfo.Version}";
 
     public void SetViewModel(MainViewModel viewModel)
     {
         Root.DataContext = viewModel;
         ApplyTheme(viewModel.Settings.Theme);
         viewModel.Settings.ThemeChanged += ApplyTheme;
+
+        // The native tray menu reads IsChecked when it builds its items, so keep it current.
+        TrayRunAtStartup.IsChecked = viewModel.Settings.RunAtStartup;
+        viewModel.Settings.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(SettingsViewModel.RunAtStartup))
+            {
+                TrayRunAtStartup.IsChecked = viewModel.Settings.RunAtStartup;
+            }
+        };
     }
 
     private void ApplyTheme(string theme)
@@ -59,18 +67,17 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         _isVisible = false;
     }
 
+    [RelayCommand]
     private void ShowFromTray()
-    {
-        TrayIcon.CloseContextMenu();
-        // Flyout still owns focus until this click finishes; restore on the next tick.
-        DispatcherQueue.TryEnqueue(() =>
+        // The flyout still owns focus until this click finishes; restore on the next tick.
+        => OnUiThread(() =>
         {
+            TrayIcon.CloseContextMenu();
             H.NotifyIcon.WindowExtensions.Show(this);
             _isVisible = true;
             Activate();
             this.BringToFront();
         });
-    }
 
     private async void DeleteChat_Click(object sender, RoutedEventArgs e)
     {
@@ -89,6 +96,27 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         }
     }
 
+    // Flyout items don't reliably inherit the row's DataContext, so set it from the flyout target.
+    private void ChatMenu_Opening(object sender, object e)
+    {
+        if (sender is MenuFlyout { Target.DataContext: ChatViewModel chat } flyout)
+        {
+            foreach (var item in flyout.Items)
+            {
+                item.DataContext = chat;
+            }
+        }
+    }
+
+    private async void RenameChat_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: ChatViewModel chat }
+            && await Dialogs.Prompt(Content.XamlRoot, "Rename chat", chat.Title) is { } title)
+        {
+            chat.Rename(title);
+        }
+    }
+
     private async void ExportChat_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement { DataContext: ChatViewModel chat } || Root.DataContext is not MainViewModel vm)
@@ -100,7 +128,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         {
             SuggestedFileName = chat.Title,
         };
-        picker.FileTypeChoices.Add("LocalMind conversation", [".localmind-chat.json"]);
+        picker.FileTypeChoices.Add("LocalMind conversation", [".json"]);
         WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(this));
 
         var file = await picker.PickSaveFileAsync();
@@ -132,52 +160,53 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         sibling.SelectedItem = null;
     }
 
-    private void TrayNewChat_Click(object sender, RoutedEventArgs e)
-    {
-        if (Root.DataContext is MainViewModel vm)
+    [RelayCommand]
+    private void NewChatFromTray()
+        => OnUiThread(() =>
         {
-            vm.NewChatCommand.Execute(null);
-            ShowFromTray();
-        }
-    }
+            if (Root.DataContext is MainViewModel vm)
+            {
+                vm.NewChatCommand.Execute(null);
+                ShowFromTray();
+            }
+        });
 
-    private void TrayOpenLogs_Click(object sender, RoutedEventArgs e)
-    {
-        if (Root.DataContext is MainViewModel vm)
+    [RelayCommand]
+    private void OpenRepository() => AppInfo.OpenRepository();
+
+    [RelayCommand]
+    private void OpenLogs() => AppLog.OpenDirectory();
+
+    [RelayCommand]
+    private void ToggleRunAtStartup()
+        => OnUiThread(() =>
         {
-            vm.Settings.OpenLogsCommand.Execute(null);
-        }
-    }
+            if (Root.DataContext is MainViewModel vm)
+            {
+                vm.Settings.RunAtStartup = !vm.Settings.RunAtStartup;
+            }
+        });
 
-    private void TrayContextFlyout_Opening(object sender, object e)
-    {
-        if (Root.DataContext is MainViewModel vm)
+    [RelayCommand]
+    private void CheckForUpdatesFromTray()
+        => OnUiThread(() =>
         {
-            TrayRunAtStartup.IsChecked = vm.Settings.RunAtStartup;
-        }
-    }
+            if (Root.DataContext is MainViewModel vm)
+            {
+                vm.CheckForUpdatesCommand.Execute(null);
+            }
+        });
 
-    private void TrayRunAtStartup_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is ToggleMenuFlyoutItem { IsChecked: bool isChecked } && Root.DataContext is MainViewModel vm)
+    [RelayCommand]
+    private void ExitApp()
+        => OnUiThread(() =>
         {
-            vm.Settings.RunAtStartup = isChecked;
-        }
-    }
+            _forceClose = true;
+            TrayIcon.Dispose();
+            Close();
+        });
 
-    private void TrayCheckForUpdates_Click(object sender, RoutedEventArgs e)
-    {
-        if (Root.DataContext is MainViewModel vm)
-        {
-            vm.CheckForUpdatesCommand.Execute(null);
-        }
-    }
-
-    private void TrayExit_Click(object sender, RoutedEventArgs e)
-    {
-        _forceClose = true;
-        TrayIcon.Dispose();
-        Close();
-    }
+    // Native tray menu items are invoked from the tray icon's own message loop.
+    private void OnUiThread(Action action) => DispatcherQueue.TryEnqueue(() => action());
 }
 

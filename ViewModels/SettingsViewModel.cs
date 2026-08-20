@@ -18,10 +18,16 @@ public partial class FoundryModelVM : ObservableObject
     public string DisplayName { get; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanDelete))]
     public partial string Status { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanDelete))]
     public partial bool IsBusy { get; set; }
+
+    public bool CanDelete => Status == "Ready" && !IsBusy;
+
+    public event Action Deleted;
 
     public FoundryModelVM(FoundryLocalProvider foundry, string alias, string displayName, Action<string> onReady)
     {
@@ -60,6 +66,26 @@ public partial class FoundryModelVM : ObservableObject
             IsBusy = false;
         }
     }
+
+    [RelayCommand]
+    private async Task Delete()
+    {
+        IsBusy = true;
+        try
+        {
+            await _foundry.Delete(Alias);
+            Status = "Download";
+            Deleted?.Invoke();
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warning($"Foundry model delete failed for '{Alias}'.", ex);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 }
 
 public partial class SettingsViewModel : ObservableObject
@@ -71,6 +97,7 @@ public partial class SettingsViewModel : ObservableObject
     public ObservableCollection<FoundryModelVM> FoundryModels { get; } = [];
     public ObservableCollection<string> OllamaModels { get; } = [];
     public IReadOnlyList<string> ThemeOptions { get; } = ["System", "Light", "Dark"];
+    public string AppVersion => $"LocalMind v{AppInfo.Version}";
 
     [ObservableProperty]
     public partial string OllamaStatus { get; set; }
@@ -88,6 +115,7 @@ public partial class SettingsViewModel : ObservableObject
     public partial bool RunAtStartup { get; set; }
 
     public event Action<string> ModelReady;
+    public event Action ModelsChanged;
     public event Action<string> ThemeChanged;
 
     private bool _refreshing;
@@ -104,7 +132,9 @@ public partial class SettingsViewModel : ObservableObject
         OllamaStatus = "Checking…";
         foreach (var (alias, displayName) in FoundryLocalProvider.Curated)
         {
-            FoundryModels.Add(new FoundryModelVM(foundry, alias, displayName, name => ModelReady?.Invoke(name)));
+            var model = new FoundryModelVM(foundry, alias, displayName, name => ModelReady?.Invoke(name));
+            model.Deleted += () => ModelsChanged?.Invoke();
+            FoundryModels.Add(model);
         }
     }
 

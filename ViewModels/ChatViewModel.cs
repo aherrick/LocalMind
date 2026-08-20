@@ -162,6 +162,13 @@ public partial class ChatViewModel : ObservableObject
         SelectedModel = savedModel;
     }
 
+    public void Rename(string title)
+    {
+        Title = title;
+        Model.Title = title;
+        _store.Save(Model);
+    }
+
     public bool Matches(string query)
         => Title.Contains(query, StringComparison.OrdinalIgnoreCase)
         || Messages.Any(m => m.Text.Contains(query, StringComparison.OrdinalIgnoreCase));

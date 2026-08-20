@@ -33,13 +33,22 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <ComboBox Grid.Column="0"
-                          MinWidth="240"
-                          PlaceholderText="Select a model"
-                          DisplayMemberPath="Label"
-                          ItemsSource="{Binding ReadyModels}"
-                          SelectedItem="{Binding SelectedModel, Mode=TwoWay}"
-                          IsEnabled="{Binding IsModelSelectionEnabled}" />
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                    <ComboBox MinWidth="240"
+                              PlaceholderText="Select a model"
+                              DisplayMemberPath="Label"
+                              ItemsSource="{Binding ReadyModels}"
+                              SelectedItem="{Binding SelectedModel, Mode=TwoWay}"
+                              IsEnabled="{Binding IsModelSelectionEnabled}" />
+                    <ProgressRing Width="18"
+                                  Height="18"
+                                  IsActive="True"
+                                  Visibility="{Binding IsModelLoading, Converter={StaticResource BoolToVisibility}}" />
+                    <TextBlock VerticalAlignment="Center"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Text="Loading model…"
+                               Visibility="{Binding IsModelLoading, Converter={StaticResource BoolToVisibility}}" />
+                </StackPanel>
 
                 <TextBlock Grid.Column="1"
                            VerticalAlignment="Center"

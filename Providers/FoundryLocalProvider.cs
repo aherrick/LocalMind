@@ -104,6 +104,15 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
         await model.DownloadAsync(progress, cancellationToken);
     }
 
+    public async Task Delete(string alias, CancellationToken cancellationToken = default)
+    {
+        var catalog = await GetCatalog(cancellationToken);
+        var model = await catalog.GetModelAsync(alias, cancellationToken)
+            ?? throw new InvalidOperationException($"Model '{alias}' is not available in the Foundry catalog.");
+        await model.UnloadAsync(cancellationToken);
+        await model.RemoveFromCacheAsync(cancellationToken);
+    }
+
     public async Task<IChatClient> CreateChatClientAsync(string modelId, CancellationToken cancellationToken = default)
     {
         var catalog = await GetCatalog(cancellationToken);

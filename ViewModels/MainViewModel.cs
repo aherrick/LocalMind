@@ -59,6 +59,7 @@ public partial class MainViewModel : ObservableObject
             _notifications.Show("Model ready", $"{name} finished downloading.");
             _ = RefreshReadyModels();
         };
+        Settings.ModelsChanged += () => _ = RefreshReadyModels();
         _updates.UpdateReady += () => _dispatcher.TryEnqueue(() => UpdateReady = true);
         _updates.NoUpdateAvailable += () => _dispatcher.TryEnqueue(() =>
             _notifications.Show("You're on latest", "LocalMind is up to date."));

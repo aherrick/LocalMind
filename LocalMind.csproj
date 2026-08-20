@@ -5,6 +5,7 @@
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>LocalMind</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\localmind.ico</ApplicationIcon>
     <Platforms>x64</Platforms>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PlatformTarget>x64</PlatformTarget>
@@ -23,6 +24,11 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include=".github\workflows\release.yml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\localmind.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\localmind.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
