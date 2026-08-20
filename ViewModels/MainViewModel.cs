@@ -71,7 +71,6 @@ public partial class MainViewModel : ObservableObject
 
     public event Action UpdateAvailable;
     public event Action UpToDate;
-    public event Action NoModelsInstalled;
 
     public void Initialize()
     {
@@ -93,13 +92,6 @@ public partial class MainViewModel : ObservableObject
     {
         await RefreshReadyModels();
         await Settings.Refresh();
-
-        // No local models yet: send first-time users to Settings to download one.
-        if (ReadyModels.Count == 0)
-        {
-            IsSettingsOpen = true;
-            NoModelsInstalled?.Invoke();
-        }
     }
 
     private ChatViewModel CreateChatViewModel(Chat chat)
@@ -130,16 +122,20 @@ public partial class MainViewModel : ObservableObject
 
     public async Task RefreshReadyModels()
     {
-        List<LocalModel> models = [];
-        foreach (var provider in _providers)
+        Settings.IsLoadingModels = true;
+        try
         {
-            models.AddRange(await provider.GetModelsAsync());
-        }
+            var results = await Task.WhenAll(_providers.Select(p => p.GetModelsAsync()));
 
-        ReadyModels.Clear();
-        foreach (var model in models)
+            ReadyModels.Clear();
+            foreach (var model in results.SelectMany(r => r))
+            {
+                ReadyModels.Add(model);
+            }
+        }
+        finally
         {
-            ReadyModels.Add(model);
+            Settings.IsLoadingModels = false;
         }
 
         SelectedChat?.LoadSavedModel();

@@ -39,7 +39,8 @@
                               DisplayMemberPath="Label"
                               ItemsSource="{Binding ReadyModels}"
                               SelectedItem="{Binding SelectedModel, Mode=TwoWay}"
-                              IsEnabled="{Binding IsModelSelectionEnabled}" />
+                              IsEnabled="{Binding IsModelSelectionEnabled}"
+                              Visibility="{Binding ShowModelPicker, Converter={StaticResource BoolToVisibility}}" />
                     <ProgressRing Width="18"
                                   Height="18"
                                   IsActive="True"
@@ -149,6 +150,7 @@
                              AcceptsReturn="False"
                              TextWrapping="Wrap"
                              MaxHeight="160"
+                             IsEnabled="{Binding HasModel}"
                              Text="{Binding Input, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                     <Button Grid.Column="1"

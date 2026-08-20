@@ -48,6 +48,28 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
                 }
 
                 _catalog = await FoundryLocalManager.Instance.GetCatalogAsync(ct);
+            }
+        }
+        finally
+        {
+            _initGate.Release();
+        }
+        return _catalog;
+    }
+
+    // The web service only serves chat completions, so start it lazily instead of at model discovery.
+    private async Task EnsureWebService(CancellationToken ct)
+    {
+        if (_baseUrl is not null)
+        {
+            return;
+        }
+
+        await _initGate.WaitAsync(ct);
+        try
+        {
+            if (_baseUrl is null)
+            {
                 await FoundryLocalManager.Instance.StartWebServiceAsync(ct);
                 _baseUrl = (FoundryLocalManager.Instance.Urls ?? []).FirstOrDefault();
             }
@@ -56,7 +78,6 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
         {
             _initGate.Release();
         }
-        return _catalog;
     }
 
     public async Task<IReadOnlyList<LocalModel>> GetModelsAsync(CancellationToken cancellationToken = default)
@@ -118,6 +139,7 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
         var catalog = await GetCatalog(cancellationToken);
         var model = await catalog.GetModelAsync(modelId, cancellationToken)
             ?? throw new InvalidOperationException($"Model '{modelId}' is not available in the Foundry catalog.");
+        await EnsureWebService(cancellationToken);
         await model.LoadAsync(cancellationToken);
 
         if (_baseUrl is null)

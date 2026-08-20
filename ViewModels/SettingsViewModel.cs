@@ -103,6 +103,9 @@ public partial class SettingsViewModel : ObservableObject
     public partial string OllamaStatus { get; set; }
 
     [ObservableProperty]
+    public partial bool IsLoadingModels { get; set; }
+
+    [ObservableProperty]
     public partial string SystemPrompt { get; set; }
 
     [ObservableProperty]

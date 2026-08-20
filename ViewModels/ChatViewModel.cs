@@ -92,6 +92,7 @@ public partial class ChatViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
+    [NotifyPropertyChangedFor(nameof(HasModel), nameof(EmptyStateText))]
     public partial LocalModel SelectedModel { get; set; }
 
     [ObservableProperty]
@@ -127,15 +128,31 @@ public partial class ChatViewModel : ObservableObject
         }
 
         Messages.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsEmpty));
+        _settings.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(SettingsViewModel.IsLoadingModels))
+            {
+                OnPropertyChanged(nameof(ShowModelPicker));
+                OnPropertyChanged(nameof(EmptyStateText));
+            }
+        };
         UpdateContext();
         UpdateLastFlags();
     }
 
     public bool IsEmpty => Messages.Count == 0;
 
-    public string EmptyStateText => SelectedModel is null
-        ? "Select a model above, then start chatting"
-        : "Ask anything to start the conversation";
+    public bool HasModel => SelectedModel is not null;
+
+    public bool ShowModelPicker => !_settings.IsLoadingModels && ReadyModels.Count > 0;
+
+    public string EmptyStateText => (_settings.IsLoadingModels, ReadyModels.Count, SelectedModel) switch
+    {
+        (true, _, _) => "Loading models…",
+        (_, 0, _) => "Configure models in Settings to get started",
+        (_, _, null) => "Select a model above, then start chatting",
+        _ => "Ask anything to start the conversation",
+    };
 
     private bool CanSend =>
         !IsGenerating
@@ -145,7 +162,6 @@ public partial class ChatViewModel : ObservableObject
 
     partial void OnSelectedModelChanged(LocalModel value)
     {
-        OnPropertyChanged(nameof(EmptyStateText));
         if (value is not null)
         {
             Model.ProviderId = value.ProviderId;
