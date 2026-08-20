@@ -120,6 +120,22 @@
                     </ItemsControl>
                 </ScrollViewer>
 
+                <StackPanel Grid.Row="0"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="8"
+                            IsHitTestVisible="False"
+                            Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}">
+                    <icons:SymbolIcon HorizontalAlignment="Center"
+                                      FontSize="32"
+                                      Symbol="Chat"
+                                      Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                    <TextBlock HorizontalAlignment="Center"
+                               FontSize="16"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Text="{Binding EmptyStateText}" />
+                </StackPanel>
+
                 <!-- Input -->
                 <Grid Grid.Row="1" Padding="16" ColumnSpacing="8">
                     <Grid.ColumnDefinitions>

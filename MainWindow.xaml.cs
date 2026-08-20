@@ -24,6 +24,10 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
     public bool IsVisibleToUser => _isVisible;
     public string AppVersion => $"LocalMind v{AppInfo.Version}";
 
+    private MainViewModel ViewModel => Root.DataContext as MainViewModel;
+
+    private static ChatViewModel ChatOf(object sender) => (sender as FrameworkElement)?.DataContext as ChatViewModel;
+
     public void SetViewModel(MainViewModel viewModel)
     {
         Root.DataContext = viewModel;
@@ -81,7 +85,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
 
     private async void DeleteChat_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement { DataContext: ChatViewModel chat } && Root.DataContext is MainViewModel vm
+        if (ChatOf(sender) is { } chat && ViewModel is { } vm
             && await Dialogs.Confirm(Content.XamlRoot, "Delete chat?", "This can't be undone."))
         {
             vm.DeleteChatCommand.Execute(chat);
@@ -90,9 +94,9 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
 
     private void PinChat_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement { DataContext: ChatViewModel chat } && Root.DataContext is MainViewModel vm)
+        if (ChatOf(sender) is { } chat)
         {
-            vm.TogglePinCommand.Execute(chat);
+            ViewModel?.TogglePinCommand.Execute(chat);
         }
     }
 
@@ -110,7 +114,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
 
     private async void RenameChat_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement { DataContext: ChatViewModel chat }
+        if (ChatOf(sender) is { } chat
             && await Dialogs.Prompt(Content.XamlRoot, "Rename chat", chat.Title) is { } title)
         {
             chat.Rename(title);
@@ -119,7 +123,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
 
     private async void ExportChat_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not FrameworkElement { DataContext: ChatViewModel chat } || Root.DataContext is not MainViewModel vm)
+        if (ChatOf(sender) is not { } chat || ViewModel is not { } vm)
         {
             return;
         }
@@ -149,7 +153,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
 
     private void ChatList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (sender is not ListView { SelectedItem: ChatViewModel chat } list || Root.DataContext is not MainViewModel vm)
+        if (sender is not ListView { SelectedItem: ChatViewModel chat } list || ViewModel is not { } vm)
         {
             return;
         }
@@ -164,7 +168,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
     private void NewChatFromTray()
         => OnUiThread(() =>
         {
-            if (Root.DataContext is MainViewModel vm)
+            if (ViewModel is { } vm)
             {
                 vm.NewChatCommand.Execute(null);
                 ShowFromTray();
@@ -181,7 +185,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
     private void ToggleRunAtStartup()
         => OnUiThread(() =>
         {
-            if (Root.DataContext is MainViewModel vm)
+            if (ViewModel is { } vm)
             {
                 vm.Settings.RunAtStartup = !vm.Settings.RunAtStartup;
             }
@@ -189,13 +193,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
 
     [RelayCommand]
     private void CheckForUpdatesFromTray()
-        => OnUiThread(() =>
-        {
-            if (Root.DataContext is MainViewModel vm)
-            {
-                vm.CheckForUpdatesCommand.Execute(null);
-            }
-        });
+        => OnUiThread(() => ViewModel?.CheckForUpdatesCommand.Execute(null));
 
     [RelayCommand]
     private void ExitApp()

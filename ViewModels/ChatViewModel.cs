@@ -126,9 +126,16 @@ public partial class ChatViewModel : ObservableObject
             Messages.Add(new ChatMessageVM(role, text, m.Timestamp));
         }
 
+        Messages.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsEmpty));
         UpdateContext();
         UpdateLastFlags();
     }
+
+    public bool IsEmpty => Messages.Count == 0;
+
+    public string EmptyStateText => SelectedModel is null
+        ? "Select a model above, then start chatting"
+        : "Ask anything to start the conversation";
 
     private bool CanSend =>
         !IsGenerating
@@ -138,6 +145,7 @@ public partial class ChatViewModel : ObservableObject
 
     partial void OnSelectedModelChanged(LocalModel value)
     {
+        OnPropertyChanged(nameof(EmptyStateText));
         if (value is not null)
         {
             Model.ProviderId = value.ProviderId;
