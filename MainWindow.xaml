@@ -206,8 +206,10 @@
             <Grid Grid.Column="1">
                 <views:ChatView DataContext="{Binding SelectedChat}"
                                 Visibility="{Binding DataContext.IsSettingsOpen, ElementName=Root, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
-                <views:SettingsView DataContext="{Binding Settings}"
-                                    Visibility="{Binding DataContext.IsSettingsOpen, ElementName=Root, Converter={StaticResource BoolToVisibility}}" />
+                <ContentControl x:Name="SettingsHost"
+                                HorizontalContentAlignment="Stretch"
+                                VerticalContentAlignment="Stretch"
+                                Visibility="{Binding DataContext.IsSettingsOpen, ElementName=Root, Converter={StaticResource BoolToVisibility}}" />
             </Grid>
         </Grid>
     </Grid>

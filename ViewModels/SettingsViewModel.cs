@@ -150,12 +150,20 @@ public partial class SettingsViewModel : ObservableObject
 
     partial void OnSystemPromptChanged(string value)
     {
+        if (_settings.SystemPrompt == value)
+        {
+            return;
+        }
         _settings.SystemPrompt = value;
         Save();
     }
 
     partial void OnThemeChanged(string value)
     {
+        if (_settings.Theme == value)
+        {
+            return;
+        }
         _settings.Theme = value;
         Save();
         ThemeChanged?.Invoke(value);
@@ -163,12 +171,20 @@ public partial class SettingsViewModel : ObservableObject
 
     partial void OnStartMinimizedChanged(bool value)
     {
+        if (_settings.StartMinimized == value)
+        {
+            return;
+        }
         _settings.StartMinimized = value;
         Save();
     }
 
     partial void OnMinimizeToTrayOnCloseChanged(bool value)
     {
+        if (_settings.MinimizeToTrayOnClose == value)
+        {
+            return;
+        }
         _settings.MinimizeToTrayOnClose = value;
         Save();
     }

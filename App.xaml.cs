@@ -29,7 +29,6 @@ public partial class App : Application
         var ollama = new OllamaProvider();
         var store = new ChatStore();
         var notifications = new NotificationService();
-        notifications.Register();
         var updates = new UpdateService();
         var settingsStore = new SettingsStore();
 
@@ -45,6 +44,9 @@ public partial class App : Application
             _window.HideToTray();
         }
         viewModel.Initialize();
+        _window.DispatcherQueue.TryEnqueue(
+            Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
+            notifications.Register);
     }
 }
 

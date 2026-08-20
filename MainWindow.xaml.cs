@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.Input;
 using LocalMind.Services;
 using LocalMind.ViewModels;
+using LocalMind.Views;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Storage.Pickers;
@@ -35,6 +36,16 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         Root.DataContext = viewModel;
         ApplyTheme(viewModel.Settings.Theme);
         viewModel.Settings.ThemeChanged += ApplyTheme;
+
+        viewModel.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(MainViewModel.IsSettingsOpen)
+                && viewModel.IsSettingsOpen
+                && SettingsHost.Content is null)
+            {
+                SettingsHost.Content = new SettingsView { DataContext = viewModel.Settings };
+            }
+        };
 
         // The native tray menu reads IsChecked when it builds its items, so keep it current.
         TrayRunAtStartup.IsChecked = viewModel.Settings.RunAtStartup;

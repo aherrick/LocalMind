@@ -85,13 +85,7 @@ public partial class MainViewModel : ObservableObject
         {
             NewChat();
         }
-        _ = RefreshStartup();
-    }
-
-    private async Task RefreshStartup()
-    {
-        await RefreshReadyModels();
-        await Settings.Refresh();
+        _ = RefreshReadyModels();
     }
 
     private ChatViewModel CreateChatViewModel(Chat chat)
