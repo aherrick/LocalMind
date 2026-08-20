@@ -19,12 +19,22 @@ public sealed class SettingsStore
         {
             return JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(_path), Options) ?? new AppSettings();
         }
-        catch
+        catch (Exception ex)
         {
+            AppLog.Warning($"Failed to load settings file '{_path}'.", ex);
             return new AppSettings();
         }
     }
 
     public void Save(AppSettings settings)
-        => File.WriteAllText(_path, JsonSerializer.Serialize(settings, Options));
+    {
+        try
+        {
+            File.WriteAllText(_path, JsonSerializer.Serialize(settings, Options));
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error($"Failed to save settings file '{_path}'.", ex);
+        }
+    }
 }

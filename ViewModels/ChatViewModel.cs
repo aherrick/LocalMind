@@ -175,8 +175,9 @@ public partial class ChatViewModel : ObservableObject
             var provider = _providers.First(p => p.Id == providerId);
             _client = await provider.CreateChatClientAsync(modelId);
         }
-        catch
+        catch (Exception ex)
         {
+            AppLog.Warning($"Failed to load model '{modelId}' from provider '{providerId}'.", ex);
             _client = null;
         }
         finally
@@ -287,6 +288,7 @@ public partial class ChatViewModel : ObservableObject
         }
         catch (Exception ex)
         {
+            AppLog.Error($"Chat generation failed for '{Title}' using '{Model.ProviderId}/{Model.ModelId}'.", ex);
             if (string.IsNullOrEmpty(assistant.Text))
             {
                 assistant.Text = $"[error] {ex.Message}";

@@ -35,8 +35,9 @@ public sealed class UpdateService
             await _manager.DownloadUpdatesAsync(_pending);
             UpdateReady?.Invoke();
         }
-        catch
+        catch (Exception ex)
         {
+            AppLog.Warning("Update check failed.", ex);
         }
     }
 
@@ -44,7 +45,15 @@ public sealed class UpdateService
     {
         if (_manager is not null && _pending is not null)
         {
-            _manager.ApplyUpdatesAndRestart(_pending);
+            try
+            {
+                AppLog.Info($"Applying update to {_pending.TargetFullRelease.Version}.");
+                _manager.ApplyUpdatesAndRestart(_pending);
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error("Failed to apply update and restart.", ex);
+            }
         }
     }
 }

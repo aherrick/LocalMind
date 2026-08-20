@@ -1,4 +1,5 @@
 using LocalMind.Models;
+using LocalMind.Services;
 using Microsoft.Extensions.AI;
 using OllamaSharp;
 
@@ -19,8 +20,9 @@ public sealed class OllamaProvider : ILocalModelProvider
             var models = await ollama.ListLocalModelsAsync(cancellationToken);
             return [.. models.Select(m => new LocalModel(Id, DisplayName, m.Name, m.Name))];
         }
-        catch
+        catch (Exception ex)
         {
+            AppLog.Warning("Ollama model discovery failed.", ex);
             return null;
         }
     }

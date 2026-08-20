@@ -149,6 +149,21 @@
                                                   OffContent=""
                                                   IsOn="{Binding RunAtStartup, Mode=TwoWay}" />
                                 </Grid>
+
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Logs" />
+                                        <TextBlock Text="Open the diagnostics folder." Style="{StaticResource SettingCaption}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="1"
+                                            MinWidth="96"
+                                            Command="{Binding OpenLogsCommand}"
+                                            Content="Open" />
+                                </Grid>
                             </StackPanel>
                         </Border>
                     </StackPanel>

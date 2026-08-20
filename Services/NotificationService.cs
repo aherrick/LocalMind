@@ -14,9 +14,10 @@ public sealed class NotificationService
             AppNotificationManager.Default.Register();
             _registered = true;
         }
-        catch
+        catch (Exception ex)
         {
             _registered = false;
+            AppLog.Warning("Notification registration failed.", ex);
         }
     }
 
@@ -34,8 +35,9 @@ public sealed class NotificationService
                 .BuildNotification();
             AppNotificationManager.Default.Show(notification);
         }
-        catch
+        catch (Exception ex)
         {
+            AppLog.Warning("Showing notification failed.", ex);
         }
     }
 }

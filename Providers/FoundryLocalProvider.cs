@@ -1,5 +1,6 @@
 using System.ClientModel;
 using LocalMind.Models;
+using LocalMind.Services;
 using Microsoft.AI.Foundry.Local;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -73,8 +74,9 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
+            AppLog.Warning("Foundry Local model discovery failed.", ex);
         }
         return ready;
     }
@@ -87,8 +89,9 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
             var model = await catalog.GetModelAsync(alias, cancellationToken);
             return model is not null && await model.IsCachedAsync(cancellationToken);
         }
-        catch
+        catch (Exception ex)
         {
+            AppLog.Warning($"Foundry Local readiness check failed for '{alias}'.", ex);
             return false;
         }
     }

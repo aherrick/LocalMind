@@ -50,8 +50,9 @@ public partial class FoundryModelVM : ObservableObject
             Status = "Ready";
             _onReady(DisplayName);
         }
-        catch
+        catch (Exception ex)
         {
+            AppLog.Warning($"Foundry model download failed for '{Alias}'.", ex);
             Status = "Download";
         }
         finally
@@ -135,8 +136,19 @@ public partial class SettingsViewModel : ObservableObject
             return;
         }
 
-        StartupManager.Set(value);
+        try
+        {
+            StartupManager.Set(value);
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("Failed to update run-at-startup setting.", ex);
+            RunAtStartup = StartupManager.IsEnabled();
+        }
     }
+
+    [RelayCommand]
+    private static void OpenLogs() => AppLog.OpenDirectory();
 
     public async Task Refresh()
     {

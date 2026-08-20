@@ -26,8 +26,9 @@ public sealed class ChatStore
                     chats.Add(chat);
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                AppLog.Warning($"Failed to load chat file '{file}'.", ex);
             }
         }
         chats.Sort((left, right) => right.UpdatedAt.CompareTo(left.UpdatedAt));
@@ -35,14 +36,31 @@ public sealed class ChatStore
     }
 
     public void Save(Chat chat)
-        => File.WriteAllText(Path.Combine(_dir, chat.Id + ".json"), JsonSerializer.Serialize(chat, Options));
+    {
+        var path = Path.Combine(_dir, chat.Id + ".json");
+        try
+        {
+            File.WriteAllText(path, JsonSerializer.Serialize(chat, Options));
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error($"Failed to save chat file '{path}'.", ex);
+        }
+    }
 
     public void Delete(Chat chat)
     {
         var path = Path.Combine(_dir, chat.Id + ".json");
         if (File.Exists(path))
         {
-            File.Delete(path);
+            try
+            {
+                File.Delete(path);
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error($"Failed to delete chat file '{path}'.", ex);
+            }
         }
     }
 }
