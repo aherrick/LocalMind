@@ -60,10 +60,16 @@ public partial class MainViewModel : ObservableObject
             _ = RefreshReadyModels();
         };
         Settings.ModelsChanged += () => _ = RefreshReadyModels();
-        _updates.UpdateReady += () => _dispatcher.TryEnqueue(() => UpdateReady = true);
-        _updates.NoUpdateAvailable += () => _dispatcher.TryEnqueue(() =>
-            _notifications.Show("You're on latest", "LocalMind is up to date."));
+        _updates.UpdateReady += () => _dispatcher.TryEnqueue(() =>
+        {
+            UpdateReady = true;
+            UpdateAvailable?.Invoke();
+        });
+        _updates.NoUpdateAvailable += () => _dispatcher.TryEnqueue(() => UpToDate?.Invoke());
     }
+
+    public event Action UpdateAvailable;
+    public event Action UpToDate;
 
     public void Initialize()
     {

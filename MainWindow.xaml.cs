@@ -43,6 +43,26 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
                 TrayRunAtStartup.IsChecked = viewModel.Settings.RunAtStartup;
             }
         };
+
+        viewModel.UpdateAvailable += OnUpdateAvailable;
+        viewModel.UpToDate += OnUpToDate;
+    }
+
+    private async void OnUpdateAvailable()
+    {
+        if (Content?.XamlRoot is not null
+            && await Dialogs.Confirm(Content.XamlRoot, "Update available", "A new version of LocalMind is ready to install.", "Restart & update"))
+        {
+            ViewModel?.RestartForUpdateCommand.Execute(null);
+        }
+    }
+
+    private async void OnUpToDate()
+    {
+        if (Content?.XamlRoot is not null)
+        {
+            await Dialogs.Message(Content.XamlRoot, "You're up to date", "LocalMind is running the latest version.");
+        }
     }
 
     private void ApplyTheme(string theme)
