@@ -39,13 +39,7 @@
                           DisplayMemberPath="Label"
                           ItemsSource="{Binding ReadyModels}"
                           SelectedItem="{Binding SelectedModel, Mode=TwoWay}"
-                          Visibility="{Binding IsModelLocked, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
-
-                <TextBlock Grid.Column="0"
-                           VerticalAlignment="Center"
-                           FontWeight="SemiBold"
-                           Text="{Binding ModelDisplay}"
-                           Visibility="{Binding IsModelLocked, Converter={StaticResource BoolToVisibility}}" />
+                          IsEnabled="{Binding IsModelSelectionEnabled}" />
 
                 <TextBlock Grid.Column="1"
                            VerticalAlignment="Center"

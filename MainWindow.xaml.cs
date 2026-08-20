@@ -1,8 +1,10 @@
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
+using LocalMind.Services;
 using LocalMind.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Windows.Storage.Pickers;
 
 namespace LocalMind;
 
@@ -84,6 +86,36 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         if (sender is FrameworkElement { DataContext: ChatViewModel chat } && Root.DataContext is MainViewModel vm)
         {
             vm.TogglePinCommand.Execute(chat);
+        }
+    }
+
+    private async void ExportChat_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: ChatViewModel chat } || Root.DataContext is not MainViewModel vm)
+        {
+            return;
+        }
+
+        var picker = new FileSavePicker
+        {
+            SuggestedFileName = chat.Title,
+        };
+        picker.FileTypeChoices.Add("LocalMind conversation", [".localmind-chat.json"]);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(this));
+
+        var file = await picker.PickSaveFileAsync();
+        if (file is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await vm.ExportChat(chat, file.Path);
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("Chat export failed.", ex);
         }
     }
 

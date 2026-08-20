@@ -5,6 +5,7 @@ namespace LocalMind.Services;
 
 public sealed class ChatStore
 {
+    private const int ConversationFileFormatVersion = 1;
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
 
     private readonly string _dir = Path.Combine(
@@ -62,5 +63,25 @@ public sealed class ChatStore
                 AppLog.Error($"Failed to delete chat file '{path}'.", ex);
             }
         }
+    }
+
+    public async Task Export(Chat chat, string path)
+    {
+        try
+        {
+            var document = new ConversationFile { Chat = chat };
+            await File.WriteAllTextAsync(path, JsonSerializer.Serialize(document, Options));
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error($"Failed to export chat file '{path}'.", ex);
+            throw;
+        }
+    }
+
+    private sealed class ConversationFile
+    {
+        public int FormatVersion { get; set; } = ConversationFileFormatVersion;
+        public Chat Chat { get; set; }
     }
 }

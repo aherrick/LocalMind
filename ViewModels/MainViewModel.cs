@@ -77,11 +77,6 @@ public partial class MainViewModel : ObservableObject
         {
             NewChat();
         }
-        else
-        {
-            _ = SelectedChat.LoadSavedModel();
-        }
-
         _ = RefreshStartup();
     }
 
@@ -130,6 +125,9 @@ public partial class MainViewModel : ObservableObject
         {
             ReadyModels.Add(model);
         }
+
+        SelectedChat?.LoadSavedModel();
+
     }
 
     [RelayCommand]
@@ -147,7 +145,7 @@ public partial class MainViewModel : ObservableObject
         if (value is not null)
         {
             IsSettingsOpen = false;
-            _ = value.LoadSavedModel();
+            value.LoadSavedModel();
         }
     }
 
@@ -189,6 +187,8 @@ public partial class MainViewModel : ObservableObject
         vm.IsPinned = !vm.IsPinned;
         Refilter();
     }
+
+    public Task ExportChat(ChatViewModel chat, string path) => _store.Export(chat.Model, path);
 
     partial void OnSearchTextChanged(string value) => Refilter();
 

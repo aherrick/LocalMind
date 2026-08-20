@@ -82,10 +82,12 @@ public partial class ChatViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
+    [NotifyPropertyChangedFor(nameof(IsModelSelectionEnabled))]
     public partial bool IsGenerating { get; set; }
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
+    [NotifyPropertyChangedFor(nameof(IsModelSelectionEnabled))]
     public partial bool IsModelLoading { get; set; }
 
     [ObservableProperty]
@@ -93,13 +95,9 @@ public partial class ChatViewModel : ObservableObject
     public partial LocalModel SelectedModel { get; set; }
 
     [ObservableProperty]
-    public partial bool IsModelLocked { get; set; }
-
-    [ObservableProperty]
-    public partial string ModelDisplay { get; set; }
-
-    [ObservableProperty]
     public partial string ContextDisplay { get; set; }
+
+    public bool IsModelSelectionEnabled => !IsGenerating && !IsModelLoading;
 
     public ChatViewModel(
         Chat chat,
@@ -120,9 +118,7 @@ public partial class ChatViewModel : ObservableObject
 
         Title = chat.Title;
         Input = "";
-        ModelDisplay = "";
         IsPinned = chat.IsPinned;
-        IsModelLocked = chat.Messages.Count > 0;
         foreach (var m in chat.Messages)
         {
             var role = ParseRole(m.Role);
@@ -130,7 +126,6 @@ public partial class ChatViewModel : ObservableObject
             Messages.Add(new ChatMessageVM(role, text, m.Timestamp));
         }
 
-        UpdateModelDisplay();
         UpdateContext();
         UpdateLastFlags();
     }
@@ -139,12 +134,17 @@ public partial class ChatViewModel : ObservableObject
         !IsGenerating
         && !IsModelLoading
         && !string.IsNullOrWhiteSpace(Input)
-        && (IsModelLocked || SelectedModel is not null);
+        && SelectedModel is not null;
 
     partial void OnSelectedModelChanged(LocalModel value)
     {
-        if (value is not null && !IsModelLocked)
+        if (value is not null)
         {
+            Model.ProviderId = value.ProviderId;
+            Model.ModelId = value.Id;
+            Model.ModelDisplayName = value.DisplayName;
+            _client = null;
+            Persist();
             _ = LoadModel(value.ProviderId, value.Id);
         }
     }
@@ -155,8 +155,12 @@ public partial class ChatViewModel : ObservableObject
         _store.Save(Model);
     }
 
-    public Task LoadSavedModel()
-        => IsModelLocked ? LoadModel(Model.ProviderId, Model.ModelId) : Task.CompletedTask;
+    public void LoadSavedModel()
+    {
+        var savedModel = ReadyModels.FirstOrDefault(model =>
+            model.ProviderId == Model.ProviderId && model.Id == Model.ModelId);
+        SelectedModel = savedModel;
+    }
 
     public bool Matches(string query)
         => Title.Contains(query, StringComparison.OrdinalIgnoreCase)
@@ -193,19 +197,6 @@ public partial class ChatViewModel : ObservableObject
         if (text.Length == 0)
         {
             return;
-        }
-
-        if (!IsModelLocked)
-        {
-            if (SelectedModel is null)
-            {
-                return;
-            }
-            Model.ProviderId = SelectedModel.ProviderId;
-            Model.ModelId = SelectedModel.Id;
-            Model.ModelDisplayName = SelectedModel.DisplayName;
-            IsModelLocked = true;
-            UpdateModelDisplay();
         }
 
         Input = "";
@@ -330,17 +321,6 @@ public partial class ChatViewModel : ObservableObject
 
     private static MessageRole ParseRole(string role)
         => Enum.TryParse<MessageRole>(role, ignoreCase: true, out var parsed) ? parsed : MessageRole.Assistant;
-
-    private void UpdateModelDisplay()
-    {
-        if (!IsModelLocked)
-        {
-            ModelDisplay = "";
-            return;
-        }
-        var provider = _providers.FirstOrDefault(p => p.Id == Model.ProviderId);
-        ModelDisplay = provider is null ? Model.ModelDisplayName : $"{provider.DisplayName} · {Model.ModelDisplayName}";
-    }
 
     private void UpdateContext()
     {
