@@ -200,6 +200,21 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="Updates" />
+                                        <TextBlock Text="Check for a newer version." Style="{StaticResource SettingCaption}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="1"
+                                            MinWidth="96"
+                                            Command="{Binding CheckForUpdatesCommand}"
+                                            Content="Check" />
+                                </Grid>
+
+                                <Grid ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                         <TextBlock Text="Version" />
                                         <TextBlock Text="Installed application version." Style="{StaticResource SettingCaption}" />
                                     </StackPanel>

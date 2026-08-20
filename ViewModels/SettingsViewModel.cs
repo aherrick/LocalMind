@@ -120,6 +120,7 @@ public partial class SettingsViewModel : ObservableObject
     public event Action<string> ModelReady;
     public event Action ModelsChanged;
     public event Action<string> ThemeChanged;
+    public event Action CheckForUpdatesRequested;
 
     private bool _refreshing;
 
@@ -189,6 +190,9 @@ public partial class SettingsViewModel : ObservableObject
 
     [RelayCommand]
     private static void OpenLogs() => AppLog.OpenDirectory();
+
+    [RelayCommand]
+    private void CheckForUpdates() => CheckForUpdatesRequested?.Invoke();
 
     public async Task Refresh()
     {

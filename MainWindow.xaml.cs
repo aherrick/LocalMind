@@ -48,6 +48,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
 
         viewModel.UpdateAvailable += OnUpdateAvailable;
         viewModel.UpToDate += OnUpToDate;
+        viewModel.NoModelsInstalled += OnNoModelsInstalled;
     }
 
     private async void OnUpdateAvailable()
@@ -64,6 +65,14 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         if (Content?.XamlRoot is not null)
         {
             await Dialogs.Message(Content.XamlRoot, "You're up to date", "LocalMind is running the latest version.");
+        }
+    }
+
+    private async void OnNoModelsInstalled()
+    {
+        if (Content?.XamlRoot is not null)
+        {
+            await Dialogs.Message(Content.XamlRoot, "Get started", "Download a model below, then pick it and send your first message.");
         }
     }
 
@@ -223,7 +232,12 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
 
     [RelayCommand]
     private void CheckForUpdatesFromTray()
-        => OnUiThread(() => ViewModel?.CheckForUpdatesCommand.Execute(null));
+        => OnUiThread(() =>
+        {
+            // Surface the window first so the result dialog is visible when launched from the tray.
+            ShowFromTray();
+            ViewModel?.CheckForUpdatesCommand.Execute(null);
+        });
 
     [RelayCommand]
     private void ExitApp()

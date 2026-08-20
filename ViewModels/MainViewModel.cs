@@ -60,6 +60,7 @@ public partial class MainViewModel : ObservableObject
             _ = RefreshReadyModels();
         };
         Settings.ModelsChanged += () => _ = RefreshReadyModels();
+        Settings.CheckForUpdatesRequested += () => _ = _updates.Check();
         _updates.UpdateReady += () => _dispatcher.TryEnqueue(() =>
         {
             UpdateReady = true;
@@ -70,6 +71,7 @@ public partial class MainViewModel : ObservableObject
 
     public event Action UpdateAvailable;
     public event Action UpToDate;
+    public event Action NoModelsInstalled;
 
     public void Initialize()
     {
@@ -91,6 +93,13 @@ public partial class MainViewModel : ObservableObject
     {
         await RefreshReadyModels();
         await Settings.Refresh();
+
+        // No local models yet: send first-time users to Settings to download one.
+        if (ReadyModels.Count == 0)
+        {
+            IsSettingsOpen = true;
+            NoModelsInstalled?.Invoke();
+        }
     }
 
     private ChatViewModel CreateChatViewModel(Chat chat)
