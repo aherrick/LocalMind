@@ -10,6 +10,7 @@ public sealed class UpdateService
     private UpdateInfo _pending;
 
     public event Action UpdateReady;
+    public event Action NoUpdateAvailable;
 
     public async Task Check()
     {
@@ -29,6 +30,8 @@ public sealed class UpdateService
             _pending = await _manager.CheckForUpdatesAsync();
             if (_pending is null)
             {
+                AppLog.Info("No updates available.");
+                NoUpdateAvailable?.Invoke();
                 return;
             }
 

@@ -100,8 +100,6 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         sibling.SelectedItem = null;
     }
 
-    private void TrayOpen_Click(object sender, RoutedEventArgs e) => ShowFromTray();
-
     private void TrayExit_Click(object sender, RoutedEventArgs e)
     {
         _forceClose = true;
