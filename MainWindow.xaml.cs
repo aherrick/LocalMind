@@ -5,6 +5,7 @@ using LocalMind.Views;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Windows.Storage.Pickers;
 
 namespace LocalMind;
@@ -191,6 +192,28 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         sibling.SelectedItem = null;
     }
 
+    private void NewChat_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        var command = ViewModel?.NewChatCommand;
+        if (command?.CanExecute(null) == true)
+        {
+            command.Execute(null);
+            args.Handled = true;
+        }
+    }
+
+    private void SearchChats_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (ViewModel is not { } vm)
+        {
+            return;
+        }
+
+        vm.IsSettingsOpen = false;
+        DispatcherQueue.TryEnqueue(() => ChatSearchBox.Focus(FocusState.Keyboard));
+        args.Handled = true;
+    }
+
     [RelayCommand]
     private void NewChatFromTray()
         => OnUiThread(() =>
@@ -224,7 +247,18 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         {
             // Surface the window first so the result dialog is visible when launched from the tray.
             ShowFromTrayCore();
-            var command = ViewModel?.Settings.CheckForUpdatesCommand;
+            if (ViewModel is not { } vm)
+            {
+                return;
+            }
+
+            vm.IsSettingsOpen = true;
+            if (vm.OpenSettingsCommand.CanExecute(null))
+            {
+                vm.OpenSettingsCommand.Execute(null);
+            }
+
+            var command = vm.Settings.CheckForUpdatesCommand;
             if (command?.CanExecute(null) == true)
             {
                 command.Execute(null);

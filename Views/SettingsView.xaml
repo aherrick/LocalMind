@@ -203,10 +203,19 @@
                                         <TextBlock Text="Updates" />
                                         <TextBlock Text="Check for a newer version." Style="{StaticResource SettingCaption}" />
                                     </StackPanel>
-                                    <Button Grid.Column="1"
-                                            MinWidth="96"
-                                            Command="{Binding CheckForUpdatesCommand}"
-                                            Content="Check" />
+                                    <Grid Grid.Column="1" MinWidth="96" MinHeight="32">
+                                        <Button HorizontalAlignment="Stretch"
+                                                Command="{Binding CheckForUpdatesCommand}"
+                                                Content="Check"
+                                                Visibility="{Binding CheckForUpdatesCommand.IsRunning, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                                        <ProgressRing Width="20"
+                                                      Height="20"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      AutomationProperties.Name="Checking for updates"
+                                                      IsActive="{Binding CheckForUpdatesCommand.IsRunning}"
+                                                      Visibility="{Binding CheckForUpdatesCommand.IsRunning, Converter={StaticResource BoolToVisibility}}" />
+                                    </Grid>
                                 </Grid>
 
                                 <Grid ColumnSpacing="16">
