@@ -64,6 +64,7 @@
                                                 <Button Grid.Column="1"
                                                         MinWidth="96"
                                                         Content="{x:Bind Status, Mode=OneWay}"
+                                                        Visibility="{x:Bind IsReady, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}"
                                                         Command="{x:Bind DownloadCommand}" />
                                                 <Button Grid.Column="2"
                                                         Width="32"

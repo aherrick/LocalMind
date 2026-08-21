@@ -18,7 +18,7 @@ public partial class FoundryModelVM : ObservableObject
     public string DisplayName { get; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanDelete))]
+    [NotifyPropertyChangedFor(nameof(IsReady), nameof(CanDelete))]
     [NotifyCanExecuteChangedFor(nameof(DownloadCommand))]
     public partial string Status { get; set; }
 
@@ -27,8 +27,9 @@ public partial class FoundryModelVM : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(DownloadCommand))]
     public partial bool IsBusy { get; set; }
 
-    public bool CanDelete => Status == "Ready" && !IsBusy;
-    private bool CanDownload => Status != "Ready" && !IsBusy;
+    public bool IsReady => Status == "Ready";
+    public bool CanDelete => IsReady && !IsBusy;
+    private bool CanDownload => !IsReady && !IsBusy;
 
     public event Action Deleted;
 
