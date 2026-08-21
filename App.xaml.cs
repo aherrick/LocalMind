@@ -9,6 +9,12 @@ public partial class App : Application
 {
     private static MainWindow _window;
 
+    internal static XamlRoot XamlRoot =>
+        _window?.Content?.XamlRoot
+        ?? throw new InvalidOperationException("The main window XAML root is not available.");
+
+    internal static bool IsWindowVisible => _window?.AppWindow.IsVisible == true;
+
     public App()
     {
         InitializeComponent();
@@ -27,14 +33,7 @@ public partial class App : Application
 
         var foundry = new FoundryLocalProvider();
         var ollama = new OllamaProvider();
-        var store = new ChatStore();
-        var notifications = new NotificationService();
-        var updates = new UpdateService();
-        var settingsStore = new SettingsStore();
-
-        var viewModel = new MainViewModel(
-            foundry, ollama, store, notifications, updates, settingsStore,
-            () => _window.IsVisibleToUser);
+        var viewModel = new MainViewModel(foundry, ollama);
 
         _window.SetViewModel(viewModel);
         _window.Activate();
@@ -46,7 +45,7 @@ public partial class App : Application
         viewModel.Initialize();
         _window.DispatcherQueue.TryEnqueue(
             Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
-            notifications.Register);
+            NotificationService.Register);
     }
 }
 

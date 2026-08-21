@@ -11,8 +11,6 @@ public static class AppLog
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "LocalMind", "logs");
 
-    public static string DirectoryPath => LogDir;
-
     private static string CurrentPath => Path.Combine(LogDir, $"localmind-{DateTimeOffset.Now:yyyyMMdd}.log");
 
     public static void Initialize()

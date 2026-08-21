@@ -3,46 +3,44 @@ using LocalMind.Models;
 
 namespace LocalMind.Services;
 
-public sealed class SettingsStore
+public static class SettingsStore
 {
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
 
-    private readonly string _dir = Path.Combine(
+    private static readonly string DirectoryPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "LocalMind");
-    private readonly string _path = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "LocalMind", "settings.json");
+    private static readonly string SettingsPath = Path.Combine(DirectoryPath, "settings.json");
 
-    public SettingsStore() => Directory.CreateDirectory(_dir);
+    static SettingsStore() => Directory.CreateDirectory(DirectoryPath);
 
-    public AppSettings Load()
+    public static AppSettings Load()
     {
-        if (!File.Exists(_path))
+        if (!File.Exists(SettingsPath))
         {
             return new AppSettings();
         }
 
         try
         {
-            return JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(_path), Options) ?? new AppSettings();
+            return JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(SettingsPath), Options) ?? new AppSettings();
         }
         catch (Exception ex)
         {
-            AppLog.Warning($"Failed to load settings file '{_path}'.", ex);
+            AppLog.Warning($"Failed to load settings file '{SettingsPath}'.", ex);
             return new AppSettings();
         }
     }
 
-    public void Save(AppSettings settings)
+    public static void Save(AppSettings settings)
     {
         try
         {
-            File.WriteAllText(_path, JsonSerializer.Serialize(settings, Options));
+            File.WriteAllText(SettingsPath, JsonSerializer.Serialize(settings, Options));
         }
         catch (Exception ex)
         {
-            AppLog.Error($"Failed to save settings file '{_path}'.", ex);
+            AppLog.Error($"Failed to save settings file '{SettingsPath}'.", ex);
         }
     }
 }

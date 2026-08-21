@@ -20,15 +20,20 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Install Velopack
-        run: dotnet tool install --global vpk
+        run: dotnet tool install --global vpk --version 1.2.110-ge826545
 
       - name: Publish application
         run: dotnet publish LocalMind.csproj --configuration Release --runtime win-x64 --self-contained true --output publish -p:Version=$env:VERSION
+
+      - name: Download previous release
+        env:
+          VPK_TOKEN: ${{ github.token }}
+        run: vpk download github --repoUrl https://github.com/${{ github.repository }} --outputDir release
 
       - name: Package with Velopack
         run: vpk pack --packId LocalMind --packVersion $env:VERSION --packDir publish --mainExe LocalMind.exe --outputDir release
 
       - name: Create GitHub release
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release create v$env:VERSION release/* --title v$env:VERSION --generate-notes
+          VPK_TOKEN: ${{ github.token }}
+        run: vpk upload github --repoUrl https://github.com/${{ github.repository }} --outputDir release --publish --releaseName "LocalMind $env:VERSION" --tag "v$env:VERSION" --targetCommitish $env:GITHUB_SHA

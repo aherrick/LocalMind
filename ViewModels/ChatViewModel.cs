@@ -37,19 +37,12 @@ public partial class ChatMessageVM : ObservableObject
     public Visibility RegenerateVisibility => IsLast && !IsUser && !string.IsNullOrEmpty(Text) ? Visibility.Visible : Visibility.Collapsed;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsThinking), nameof(CopyVisibility), nameof(RegenerateVisibility))]
     public partial string Text { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RegenerateVisibility))]
     public partial bool IsLast { get; set; }
-
-    partial void OnTextChanged(string value)
-    {
-        OnPropertyChanged(nameof(IsThinking));
-        OnPropertyChanged(nameof(CopyVisibility));
-        OnPropertyChanged(nameof(RegenerateVisibility));
-    }
-
-    partial void OnIsLastChanged(bool value) => OnPropertyChanged(nameof(RegenerateVisibility));
 }
 
 public partial class ChatViewModel : ObservableObject
@@ -57,9 +50,6 @@ public partial class ChatViewModel : ObservableObject
     private const int ContextWindow = 32768;
 
     private readonly IReadOnlyList<ILocalModelProvider> _providers;
-    private readonly ChatStore _store;
-    private readonly NotificationService _notifications;
-    private readonly Func<bool> _isWindowVisible;
     private readonly SettingsViewModel _settings;
 
     private IChatClient _client;
@@ -103,17 +93,11 @@ public partial class ChatViewModel : ObservableObject
     public ChatViewModel(
         Chat chat,
         IReadOnlyList<ILocalModelProvider> providers,
-        ChatStore store,
-        NotificationService notifications,
-        Func<bool> isWindowVisible,
         ObservableCollection<LocalModel> readyModels,
         SettingsViewModel settings)
     {
         Model = chat;
         _providers = providers;
-        _store = store;
-        _notifications = notifications;
-        _isWindowVisible = isWindowVisible;
         _settings = settings;
         ReadyModels = readyModels;
 
@@ -128,14 +112,6 @@ public partial class ChatViewModel : ObservableObject
         }
 
         Messages.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsEmpty));
-        _settings.PropertyChanged += (_, args) =>
-        {
-            if (args.PropertyName == nameof(SettingsViewModel.IsLoadingModels))
-            {
-                OnPropertyChanged(nameof(ShowModelPicker));
-                OnPropertyChanged(nameof(EmptyStateText));
-            }
-        };
         UpdateContext();
         UpdateLastFlags();
     }
@@ -162,21 +138,28 @@ public partial class ChatViewModel : ObservableObject
 
     partial void OnSelectedModelChanged(LocalModel value)
     {
-        if (value is not null)
+        if (value is null
+            || (Model.ProviderId == value.ProviderId && Model.ModelId == value.Id))
         {
-            Model.ProviderId = value.ProviderId;
-            Model.ModelId = value.Id;
-            Model.ModelDisplayName = value.DisplayName;
-            _client = null;
-            Persist();
-            _ = LoadModel(value.ProviderId, value.Id);
+            return;
         }
+
+        Model.ProviderId = value.ProviderId;
+        Model.ModelId = value.Id;
+        Model.ModelDisplayName = value.DisplayName;
+        _client = null;
+        Persist();
     }
 
     partial void OnIsPinnedChanged(bool value)
     {
+        if (Model.IsPinned == value)
+        {
+            return;
+        }
+
         Model.IsPinned = value;
-        _store.Save(Model);
+        ChatStore.Save(Model);
     }
 
     public void LoadSavedModel()
@@ -190,7 +173,15 @@ public partial class ChatViewModel : ObservableObject
     {
         Title = title;
         Model.Title = title;
-        _store.Save(Model);
+        ChatStore.Save(Model);
+    }
+
+    public Task Export(string path) => ChatStore.Export(Model, path);
+
+    internal void NotifyModelStateChanged()
+    {
+        OnPropertyChanged(nameof(ShowModelPicker));
+        OnPropertyChanged(nameof(EmptyStateText));
     }
 
     public bool Matches(string query)
@@ -324,9 +315,9 @@ public partial class ChatViewModel : ObservableObject
             UpdateLastFlags();
             Persist();
             UpdateContext();
-            if (!_isWindowVisible())
+            if (!App.IsWindowVisible)
             {
-                _notifications.Show("Response ready", Title);
+                NotificationService.Show("Response ready", Title);
             }
         }
     }
@@ -347,7 +338,7 @@ public partial class ChatViewModel : ObservableObject
         Model.Messages = [.. Messages
             .Select(m => new StoredMessage { Role = m.Role.ToString(), Text = m.Text, Timestamp = m.Timestamp })];
         Model.UpdatedAt = DateTimeOffset.Now;
-        _store.Save(Model);
+        ChatStore.Save(Model);
     }
 
     private static MessageRole ParseRole(string role)

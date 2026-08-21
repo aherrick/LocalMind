@@ -11,7 +11,7 @@ public sealed partial class SettingsView : UserControl
     private async void DeleteModel_Click(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { DataContext: FoundryModelVM model }
-            && await Dialogs.Confirm(XamlRoot, "Delete model?", $"{model.DisplayName} will be removed from this device."))
+            && await Dialogs.Confirm("Delete model?", $"{model.DisplayName} will be removed from this device."))
         {
             model.DeleteCommand.Execute(null);
         }

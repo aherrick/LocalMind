@@ -11,7 +11,6 @@
                 <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
             <local:BoolToVisibilityConverter x:Key="BoolToVisibility" />
-            <local:NotBoolConverter x:Key="NotBoolConverter" />
             <!-- Shared max width so Settings and Chat content are the same size and centered on the window. -->
             <x:Double x:Key="ContentMaxWidth">900</x:Double>
             <!-- 900px of content plus the 240px sidebar mirrored by the responsive envelope. -->

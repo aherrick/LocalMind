@@ -3,21 +3,21 @@ using LocalMind.Models;
 
 namespace LocalMind.Services;
 
-public sealed class ChatStore
+public static class ChatStore
 {
     private const int ConversationFileFormatVersion = 1;
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
 
-    private readonly string _dir = Path.Combine(
+    private static readonly string DirectoryPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "LocalMind", "chats");
 
-    public ChatStore() => Directory.CreateDirectory(_dir);
+    static ChatStore() => Directory.CreateDirectory(DirectoryPath);
 
-    public IReadOnlyList<Chat> Load()
+    public static IReadOnlyList<Chat> Load()
     {
         List<Chat> chats = [];
-        foreach (var file in Directory.EnumerateFiles(_dir, "*.json"))
+        foreach (var file in Directory.EnumerateFiles(DirectoryPath, "*.json"))
         {
             try
             {
@@ -36,9 +36,9 @@ public sealed class ChatStore
         return chats;
     }
 
-    public void Save(Chat chat)
+    public static void Save(Chat chat)
     {
-        var path = Path.Combine(_dir, chat.Id + ".json");
+        var path = Path.Combine(DirectoryPath, chat.Id + ".json");
         try
         {
             File.WriteAllText(path, JsonSerializer.Serialize(chat, Options));
@@ -49,34 +49,23 @@ public sealed class ChatStore
         }
     }
 
-    public void Delete(Chat chat)
+    public static void Delete(Chat chat)
     {
-        var path = Path.Combine(_dir, chat.Id + ".json");
-        if (File.Exists(path))
-        {
-            try
-            {
-                File.Delete(path);
-            }
-            catch (Exception ex)
-            {
-                AppLog.Error($"Failed to delete chat file '{path}'.", ex);
-            }
-        }
-    }
-
-    public async Task Export(Chat chat, string path)
-    {
+        var path = Path.Combine(DirectoryPath, chat.Id + ".json");
         try
         {
-            var document = new ConversationFile { Chat = chat };
-            await File.WriteAllTextAsync(path, JsonSerializer.Serialize(document, Options));
+            File.Delete(path);
         }
         catch (Exception ex)
         {
-            AppLog.Error($"Failed to export chat file '{path}'.", ex);
-            throw;
+            AppLog.Error($"Failed to delete chat file '{path}'.", ex);
         }
+    }
+
+    public static Task Export(Chat chat, string path)
+    {
+        var document = new ConversationFile { Chat = chat };
+        return File.WriteAllTextAsync(path, JsonSerializer.Serialize(document, Options));
     }
 
     private sealed class ConversationFile

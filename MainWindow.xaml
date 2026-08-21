@@ -178,21 +178,6 @@
                 </Grid>
 
                 <StackPanel Grid.Row="3" Spacing="8">
-                    <InfoBar Visibility="{Binding UpdateReady, Converter={StaticResource BoolToVisibility}}"
-                             IsOpen="{Binding UpdateReady}"
-                             IsClosable="False"
-                             Severity="Success"
-                             Title="Update ready">
-                        <InfoBar.ActionButton>
-                            <Button Command="{Binding RestartForUpdateCommand}">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <icons:SymbolIcon Symbol="ArrowClockwise" />
-                                    <TextBlock Text="Restart" />
-                                </StackPanel>
-                            </Button>
-                        </InfoBar.ActionButton>
-                    </InfoBar>
-
                     <Button HorizontalAlignment="Stretch" Command="{Binding OpenSettingsCommand}">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
                             <icons:SymbolIcon Symbol="Settings" />

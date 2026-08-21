@@ -64,7 +64,6 @@
                                                 <Button Grid.Column="1"
                                                         MinWidth="96"
                                                         Content="{x:Bind Status, Mode=OneWay}"
-                                                        IsEnabled="{x:Bind IsBusy, Mode=OneWay, Converter={StaticResource NotBoolConverter}}"
                                                         Command="{x:Bind DownloadCommand}" />
                                                 <Button Grid.Column="2"
                                                         Width="32"
@@ -237,7 +236,7 @@
                                          TextWrapping="Wrap"
                                          MinHeight="96"
                                          PlaceholderText="e.g. You are a concise assistant. Answer in plain language."
-                                         Text="{Binding SystemPrompt, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                         Text="{Binding SystemPrompt, Mode=TwoWay}" />
                             </StackPanel>
                         </Border>
                     </StackPanel>

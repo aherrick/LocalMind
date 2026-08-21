@@ -3,11 +3,11 @@ using Microsoft.Windows.AppNotifications.Builder;
 
 namespace LocalMind.Services;
 
-public sealed class NotificationService
+public static class NotificationService
 {
-    private bool _registered;
+    private static volatile bool _registered;
 
-    public void Register()
+    public static void Register()
     {
         try
         {
@@ -21,7 +21,7 @@ public sealed class NotificationService
         }
     }
 
-    public void Show(string title, string message)
+    public static void Show(string title, string message)
     {
         if (!_registered)
         {

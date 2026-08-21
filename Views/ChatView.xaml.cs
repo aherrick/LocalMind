@@ -31,6 +31,7 @@ public sealed partial class ChatView : UserControl
         if (_messages is not null)
         {
             _messages.CollectionChanged -= OnMessagesChanged;
+            _messages = null;
         }
         foreach (var message in _observedMessages)
         {
@@ -56,6 +57,14 @@ public sealed partial class ChatView : UserControl
 
     private void OnMessagesChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
+        if (e.OldItems is not null)
+        {
+            foreach (ChatMessageVM message in e.OldItems)
+            {
+                _observedMessages.Remove(message);
+                message.PropertyChanged -= OnMessagePropertyChanged;
+            }
+        }
         if (e.NewItems is not null)
         {
             foreach (ChatMessageVM message in e.NewItems)

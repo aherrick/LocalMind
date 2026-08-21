@@ -11,7 +11,6 @@ namespace LocalMind;
 
 public sealed partial class MainWindow : WinUIEx.WindowEx
 {
-    private bool _isVisible = true;
     private bool _forceClose;
 
     public MainWindow()
@@ -23,7 +22,6 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         AppWindow.Closing += OnClosing;
     }
 
-    public bool IsVisibleToUser => _isVisible;
     public string AppVersion => $"LocalMind v{AppInfo.Version}";
 
     private MainViewModel ViewModel => Root.DataContext as MainViewModel;
@@ -36,7 +34,6 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
     {
         Root.DataContext = viewModel;
         ApplyTheme(viewModel.Settings.Theme);
-        viewModel.Settings.ThemeChanged += ApplyTheme;
 
         viewModel.PropertyChanged += (_, args) =>
         {
@@ -56,27 +53,11 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
             {
                 TrayRunAtStartup.IsChecked = viewModel.Settings.RunAtStartup;
             }
+            else if (args.PropertyName == nameof(SettingsViewModel.Theme))
+            {
+                ApplyTheme(viewModel.Settings.Theme);
+            }
         };
-
-        viewModel.UpdateAvailable += OnUpdateAvailable;
-        viewModel.UpToDate += OnUpToDate;
-    }
-
-    private async void OnUpdateAvailable()
-    {
-        if (Content?.XamlRoot is not null
-            && await Dialogs.Confirm(Content.XamlRoot, "Update available", "A new version of LocalMind is ready to install.", "Restart & update"))
-        {
-            ViewModel?.RestartForUpdateCommand.Execute(null);
-        }
-    }
-
-    private async void OnUpToDate()
-    {
-        if (Content?.XamlRoot is not null)
-        {
-            await Dialogs.Message(Content.XamlRoot, "You're up to date", "LocalMind is running the latest version.");
-        }
     }
 
     private void ApplyTheme(string theme)
@@ -87,11 +68,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
             _ => ElementTheme.Default,
         };
 
-    public void HideToTray()
-    {
-        H.NotifyIcon.WindowExtensions.Hide(this);
-        _isVisible = false;
-    }
+    public void HideToTray() => H.NotifyIcon.WindowExtensions.Hide(this);
 
     private void OnClosing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
     {
@@ -104,8 +81,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         if (minimizeToTray)
         {
             args.Cancel = true;
-            H.NotifyIcon.WindowExtensions.Hide(this);
-            _isVisible = false;
+            HideToTray();
         }
         else
         {
@@ -130,14 +106,13 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         }
         H.NotifyIcon.EfficiencyMode.EfficiencyModeUtilities.SetEfficiencyMode(false);
         AppWindow.Show(true);
-        _isVisible = true;
         this.BringToFront();
     }
 
     private async void DeleteChat_Click(object sender, RoutedEventArgs e)
     {
         if (ChatOf(sender) is { } chat && ViewModel is { } vm
-            && await Dialogs.Confirm(Content.XamlRoot, "Delete chat?", "This can't be undone."))
+            && await Dialogs.Confirm("Delete chat?", "This can't be undone."))
         {
             vm.DeleteChatCommand.Execute(chat);
         }
@@ -166,7 +141,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
     private async void RenameChat_Click(object sender, RoutedEventArgs e)
     {
         if (ChatOf(sender) is { } chat
-            && await Dialogs.Prompt(Content.XamlRoot, "Rename chat", chat.Title) is { } title)
+            && await Dialogs.Prompt("Rename chat", chat.Title) is { } title)
         {
             chat.Rename(title);
         }
@@ -174,7 +149,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
 
     private async void ExportChat_Click(object sender, RoutedEventArgs e)
     {
-        if (ChatOf(sender) is not { } chat || ViewModel is not { } vm)
+        if (ChatOf(sender) is not { } chat)
         {
             return;
         }
@@ -194,7 +169,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
 
         try
         {
-            await vm.ExportChat(chat, file.Path);
+            await chat.Export(file.Path);
         }
         catch (Exception ex)
         {
@@ -248,7 +223,11 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         {
             // Surface the window first so the result dialog is visible when launched from the tray.
             ShowFromTrayCore();
-            ViewModel?.CheckForUpdatesCommand.Execute(null);
+            var command = ViewModel?.Settings.CheckForUpdatesCommand;
+            if (command?.CanExecute(null) == true)
+            {
+                command.Execute(null);
+            }
         });
 
     [RelayCommand]

@@ -3,56 +3,45 @@ using Velopack.Sources;
 
 namespace LocalMind.Services;
 
-public sealed class UpdateService
+public static class UpdateService
 {
-    private UpdateManager _manager;
-    private UpdateInfo _pending;
-
-    public event Action UpdateReady;
-    public event Action NoUpdateAvailable;
-
-    public async Task Check()
+    public static async Task CheckForUpdates()
     {
         try
         {
-            _manager = new UpdateManager(new GithubSource(AppInfo.RepositoryUrl, null, prerelease: false));
-            if (!_manager.IsInstalled)
+            var manager = new UpdateManager(new GithubSource(AppInfo.RepositoryUrl, null, prerelease: false));
+            if (!manager.IsInstalled)
             {
                 // Velopack can only update an installed build, so dev/debug runs no-op here.
                 AppLog.Info("Update check skipped: app is not installed via Velopack.");
                 return;
             }
 
-            _pending = await _manager.CheckForUpdatesAsync();
-            if (_pending is null)
+            var update = await manager.CheckForUpdatesAsync();
+            if (update is null)
             {
                 AppLog.Info("No updates available.");
-                NoUpdateAvailable?.Invoke();
+                await Dialogs.Message("You're up to date", "LocalMind is running the latest version.");
                 return;
             }
 
-            await _manager.DownloadUpdatesAsync(_pending);
-            UpdateReady?.Invoke();
+            AppLog.Info($"Update {update.TargetFullRelease.Version} is available.");
+            if (!await Dialogs.Confirm(
+                    "Update available",
+                    "A new version of LocalMind is available. Download and install it now?",
+                    "Update"))
+            {
+                return;
+            }
+
+            AppLog.Info($"Downloading update {update.TargetFullRelease.Version}.");
+            await manager.DownloadUpdatesAsync(update);
+            AppLog.Info($"Applying update {update.TargetFullRelease.Version}.");
+            manager.ApplyUpdatesAndRestart(update);
         }
         catch (Exception ex)
         {
-            AppLog.Warning("Update check failed.", ex);
-        }
-    }
-
-    public void ApplyAndRestart()
-    {
-        if (_manager is not null && _pending is not null)
-        {
-            try
-            {
-                AppLog.Info($"Applying update to {_pending.TargetFullRelease.Version}.");
-                _manager.ApplyUpdatesAndRestart(_pending);
-            }
-            catch (Exception ex)
-            {
-                AppLog.Error("Failed to apply update and restart.", ex);
-            }
+            AppLog.Warning("Update failed.", ex);
         }
     }
 }

@@ -11,10 +11,6 @@ namespace LocalMind.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     private readonly List<ILocalModelProvider> _providers;
-    private readonly ChatStore _store;
-    private readonly NotificationService _notifications;
-    private readonly UpdateService _updates;
-    private readonly Func<bool> _isWindowVisible;
     private readonly DispatcherQueue _dispatcher = DispatcherQueue.GetForCurrentThread();
     private readonly List<ChatViewModel> _all = [];
 
@@ -34,47 +30,25 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsSettingsOpen { get; set; }
 
-    [ObservableProperty]
-    public partial bool UpdateReady { get; set; }
-
     public MainViewModel(
         FoundryLocalProvider foundry,
-        OllamaProvider ollama,
-        ChatStore store,
-        NotificationService notifications,
-        UpdateService updates,
-        SettingsStore settingsStore,
-        Func<bool> isWindowVisible)
+        OllamaProvider ollama)
     {
         _providers = [foundry, ollama];
-        _store = store;
-        _notifications = notifications;
-        _updates = updates;
-        _isWindowVisible = isWindowVisible;
         SearchText = "";
 
-        Settings = new SettingsViewModel(foundry, ollama, settingsStore);
+        Settings = new SettingsViewModel(foundry, ollama);
         Settings.ModelReady += name =>
         {
-            _notifications.Show("Model ready", $"{name} finished downloading.");
+            NotificationService.Show("Model ready", $"{name} finished downloading.");
             _ = RefreshReadyModels();
         };
         Settings.ModelsChanged += () => _ = RefreshReadyModels();
-        Settings.CheckForUpdatesRequested += () => _ = _updates.Check();
-        _updates.UpdateReady += () => _dispatcher.TryEnqueue(() =>
-        {
-            UpdateReady = true;
-            UpdateAvailable?.Invoke();
-        });
-        _updates.NoUpdateAvailable += () => _dispatcher.TryEnqueue(() => UpToDate?.Invoke());
     }
-
-    public event Action UpdateAvailable;
-    public event Action UpToDate;
 
     public void Initialize()
     {
-        foreach (var chat in _store.Load())
+        foreach (var chat in ChatStore.Load())
         {
             _all.Add(CreateChatViewModel(chat));
         }
@@ -91,7 +65,7 @@ public partial class MainViewModel : ObservableObject
     private ChatViewModel CreateChatViewModel(Chat chat)
     {
         var viewModel = new ChatViewModel(
-            chat, _providers, _store, _notifications, _isWindowVisible, ReadyModels, Settings);
+            chat, _providers, ReadyModels, Settings);
         viewModel.Started += AddStartedChat;
         return viewModel;
     }
@@ -117,6 +91,7 @@ public partial class MainViewModel : ObservableObject
     public async Task RefreshReadyModels()
     {
         Settings.IsLoadingModels = true;
+        SelectedChat?.NotifyModelStateChanged();
         try
         {
             var results = await Task.WhenAll(_providers.Select(p => p.GetModelsAsync()));
@@ -130,10 +105,9 @@ public partial class MainViewModel : ObservableObject
         finally
         {
             Settings.IsLoadingModels = false;
+            SelectedChat?.LoadSavedModel();
+            SelectedChat?.NotifyModelStateChanged();
         }
-
-        SelectedChat?.LoadSavedModel();
-
     }
 
     [RelayCommand]
@@ -171,7 +145,7 @@ public partial class MainViewModel : ObservableObject
         }
 
         var wasSelected = SelectedChat == vm;
-        _store.Delete(vm.Model);
+        ChatStore.Delete(vm.Model);
         _all.Remove(vm);
         Refilter();
 
@@ -193,8 +167,6 @@ public partial class MainViewModel : ObservableObject
         vm.IsPinned = !vm.IsPinned;
         Refilter();
     }
-
-    public Task ExportChat(ChatViewModel chat, string path) => _store.Export(chat.Model, path);
 
     partial void OnSearchTextChanged(string value) => Refilter();
 
@@ -239,10 +211,4 @@ public partial class MainViewModel : ObservableObject
             }
         }
     }
-
-    [RelayCommand]
-    private void RestartForUpdate() => _updates.ApplyAndRestart();
-
-    [RelayCommand]
-    private Task CheckForUpdates() => _updates.Check();
 }

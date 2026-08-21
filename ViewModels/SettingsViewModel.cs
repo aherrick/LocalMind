@@ -19,13 +19,16 @@ public partial class FoundryModelVM : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanDelete))]
+    [NotifyCanExecuteChangedFor(nameof(DownloadCommand))]
     public partial string Status { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanDelete))]
+    [NotifyCanExecuteChangedFor(nameof(DownloadCommand))]
     public partial bool IsBusy { get; set; }
 
     public bool CanDelete => Status == "Ready" && !IsBusy;
+    private bool CanDownload => Status != "Ready" && !IsBusy;
 
     public event Action Deleted;
 
@@ -39,16 +42,11 @@ public partial class FoundryModelVM : ObservableObject
     }
 
     public async Task Refresh()
-        => Status = await Task.Run(() => _foundry.IsReady(Alias)) ? "Ready" : "Download";
+        => Status = await _foundry.IsReady(Alias) ? "Ready" : "Download";
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanDownload))]
     private async Task Download()
     {
-        if (Status == "Ready" || IsBusy)
-        {
-            return;
-        }
-
         IsBusy = true;
         try
         {
@@ -91,7 +89,6 @@ public partial class FoundryModelVM : ObservableObject
 public partial class SettingsViewModel : ObservableObject
 {
     private readonly OllamaProvider _ollama;
-    private readonly SettingsStore _settingsStore;
     private readonly AppSettings _settings;
 
     public ObservableCollection<FoundryModelVM> FoundryModels { get; } = [];
@@ -122,16 +119,11 @@ public partial class SettingsViewModel : ObservableObject
 
     public event Action<string> ModelReady;
     public event Action ModelsChanged;
-    public event Action<string> ThemeChanged;
-    public event Action CheckForUpdatesRequested;
 
-    private bool _refreshing;
-
-    public SettingsViewModel(FoundryLocalProvider foundry, OllamaProvider ollama, SettingsStore settingsStore)
+    public SettingsViewModel(FoundryLocalProvider foundry, OllamaProvider ollama)
     {
         _ollama = ollama;
-        _settingsStore = settingsStore;
-        _settings = settingsStore.Load();
+        _settings = SettingsStore.Load();
         SystemPrompt = _settings.SystemPrompt;
         Theme = _settings.Theme;
         StartMinimized = _settings.StartMinimized;
@@ -146,7 +138,7 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
 
-    private void Save() => _settingsStore.Save(_settings);
+    private void Save() => SettingsStore.Save(_settings);
 
     partial void OnSystemPromptChanged(string value)
     {
@@ -166,7 +158,6 @@ public partial class SettingsViewModel : ObservableObject
         }
         _settings.Theme = value;
         Save();
-        ThemeChanged?.Invoke(value);
     }
 
     partial void OnStartMinimizedChanged(bool value)
@@ -211,37 +202,24 @@ public partial class SettingsViewModel : ObservableObject
     private static void OpenLogs() => AppLog.OpenDirectory();
 
     [RelayCommand]
-    private void CheckForUpdates() => CheckForUpdatesRequested?.Invoke();
+    private static Task CheckForUpdates() => UpdateService.CheckForUpdates();
 
     public async Task Refresh()
     {
-        if (_refreshing)
-        {
-            return;
-        }
-        _refreshing = true;
-        try
-        {
-            foreach (var vm in FoundryModels)
-            {
-                await vm.Refresh();
-            }
+        var foundryRefresh = Task.WhenAll(FoundryModels.Select(model => model.Refresh()));
+        var ollamaRefresh = _ollama.TryGetModels();
+        await Task.WhenAll(foundryRefresh, ollamaRefresh);
 
-            var models = await Task.Run(() => _ollama.TryGetModels());
-            if (models is null)
-            {
-                OllamaStatus = "Not detected";
-                OllamaModels.Clear();
-            }
-            else
-            {
-                OllamaStatus = "Connected";
-                SyncOllamaModels(models.Select(m => m.DisplayName));
-            }
-        }
-        finally
+        var models = await ollamaRefresh;
+        if (models is null)
         {
-            _refreshing = false;
+            OllamaStatus = "Not detected";
+            OllamaModels.Clear();
+        }
+        else
+        {
+            OllamaStatus = "Connected";
+            SyncOllamaModels(models.Select(m => m.DisplayName));
         }
     }
 

@@ -30,7 +30,6 @@ internal static class Program
             activationEvent, (_, _) => App.ActivateExistingWindow(), null, Timeout.Infinite, executeOnlyOnce: false);
 
         AppLog.Initialize();
-        AppLog.Info($"Log directory: {AppLog.DirectoryPath}");
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
             if (e.ExceptionObject is Exception ex)
