@@ -35,15 +35,17 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
     {
         Root.DataContext = viewModel;
         ApplyTheme(viewModel.Settings.Theme);
-        viewModel.NewChatOpened += ClearChatSelection;
+        viewModel.SidebarSelectionClearRequested += ClearChatSelection;
 
         viewModel.PropertyChanged += (_, args) =>
         {
             if (args.PropertyName == nameof(MainViewModel.IsSettingsOpen)
-                && viewModel.IsSettingsOpen
-                && SettingsHost.Content is null)
+                && viewModel.IsSettingsOpen)
             {
-                SettingsHost.Content = new SettingsView { DataContext = viewModel.Settings };
+                if (SettingsHost.Content is null)
+                {
+                    SettingsHost.Content = new SettingsView { DataContext = viewModel.Settings };
+                }
             }
         };
 

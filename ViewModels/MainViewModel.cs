@@ -18,7 +18,7 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<ChatViewModel> Chats { get; } = [];
     public ObservableCollection<LocalModel> ReadyModels { get; } = [];
     public SettingsViewModel Settings { get; }
-    public event Action NewChatOpened;
+    public event Action SidebarSelectionClearRequested;
 
     public bool HasPinned => PinnedChats.Count > 0;
 
@@ -124,7 +124,7 @@ public partial class MainViewModel : ObservableObject
         Refilter();
         IsSettingsOpen = false;
         SelectedChat = chat;
-        NewChatOpened?.Invoke();
+        SidebarSelectionClearRequested?.Invoke();
     }
 
     partial void OnSelectedChatChanged(ChatViewModel value)
@@ -133,6 +133,14 @@ public partial class MainViewModel : ObservableObject
         {
             IsSettingsOpen = false;
             value.LoadSavedModel();
+        }
+    }
+
+    partial void OnIsSettingsOpenChanged(bool value)
+    {
+        if (value)
+        {
+            SidebarSelectionClearRequested?.Invoke();
         }
     }
 
