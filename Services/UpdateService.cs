@@ -42,6 +42,9 @@ public static class UpdateService
         catch (Exception ex)
         {
             AppLog.Warning("Update failed.", ex);
+            await Dialogs.Message(
+                "Update failed",
+                "The update couldn't be completed. Check Logs in Settings for details.");
         }
     }
 }

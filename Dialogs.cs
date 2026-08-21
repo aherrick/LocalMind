@@ -4,7 +4,11 @@ namespace LocalMind;
 
 public static class Dialogs
 {
-    public static async Task<bool> Confirm(string title, string content, string primaryText = "Delete")
+    public static async Task<bool> Confirm(
+        string title,
+        string content,
+        string primaryText = "Delete"
+    )
     {
         var dialog = Create(title, content);
         dialog.PrimaryButtonText = primaryText;
@@ -21,7 +25,11 @@ public static class Dialogs
         await dialog.ShowAsync();
     }
 
-    public static async Task<string> Prompt(string title, string value, string primaryText = "Rename")
+    public static async Task<string> Prompt(
+        string title,
+        string value,
+        string primaryText = "Rename"
+    )
     {
         var textBox = new TextBox { Text = value, AcceptsReturn = false };
         textBox.Loaded += (_, _) => textBox.SelectAll();
@@ -39,8 +47,8 @@ public static class Dialogs
         return text.Length > 0 ? text : null;
     }
 
-    private static ContentDialog Create(string title, object content)
-        => new()
+    private static ContentDialog Create(string title, object content) =>
+        new()
         {
             Title = title,
             Content = content,

@@ -113,7 +113,12 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     public void NewChat()
     {
-        var chat = CreateChatViewModel(new Chat());
+        var previous = SelectedChat?.Model;
+        var chat = CreateChatViewModel(new Chat
+        {
+            ProviderId = previous?.ProviderId ?? "",
+            ModelId = previous?.ModelId ?? "",
+        });
         SearchText = "";
         Refilter();
         IsSettingsOpen = false;
