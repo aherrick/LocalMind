@@ -37,11 +37,18 @@ public partial class ChatMessageVM : ObservableObject
     public Visibility RegenerateVisibility => IsLast && !IsUser && !string.IsNullOrEmpty(Text) ? Visibility.Visible : Visibility.Collapsed;
 
     [ObservableProperty]
+    public partial string EditText { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsEditing { get; set; }
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsThinking), nameof(CopyVisibility), nameof(RegenerateVisibility))]
     public partial string Text { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RegenerateVisibility))]
+        EditText = text;
     public partial bool IsLast { get; set; }
 }
 
@@ -132,7 +139,6 @@ public partial class ChatViewModel : ObservableObject
 
     private bool CanSend =>
         !IsGenerating
-        && !IsModelLoading
         && !string.IsNullOrWhiteSpace(Input)
         && SelectedModel is not null;
 
@@ -174,6 +180,36 @@ public partial class ChatViewModel : ObservableObject
         Title = title;
         Model.Title = title;
         ChatStore.Save(Model);
+    }
+
+    public void EditMessage(ChatMessageVM message)
+    {
+        if (IsGenerating || !message.IsUser)
+        {
+            return;
+        }
+
+        message.EditText = message.Text;
+        message.IsEditing = true;
+    }
+
+    public void SaveMessage(ChatMessageVM message)
+    {
+        if (!message.IsEditing)
+        {
+            return;
+        }
+
+        message.Text = message.EditText;
+        message.IsEditing = false;
+        Persist();
+        UpdateContext();
+    }
+
+    public static void CancelEditing(ChatMessageVM message)
+    {
+        message.EditText = message.Text;
+        message.IsEditing = false;
     }
 
     public Task Export(string path) => ChatStore.Export(Model, path);

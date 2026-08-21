@@ -36,14 +36,6 @@
                               SelectedItem="{Binding SelectedModel, Mode=TwoWay}"
                               IsEnabled="{Binding IsModelSelectionEnabled}"
                               Visibility="{Binding ShowModelPicker, Converter={StaticResource BoolToVisibility}}" />
-                    <ProgressRing Width="18"
-                                  Height="18"
-                                  IsActive="True"
-                                  Visibility="{Binding IsModelLoading, Converter={StaticResource BoolToVisibility}}" />
-                    <TextBlock VerticalAlignment="Center"
-                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                               Text="Loading model…"
-                               Visibility="{Binding IsModelLoading, Converter={StaticResource BoolToVisibility}}" />
                 </StackPanel>
 
                 <TextBlock Grid.Column="1"
@@ -86,7 +78,14 @@
                                                           HorizontalAlignment="Left"
                                                           Visibility="{x:Bind IsThinking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                             <controls:MarkdownTextBlock Text="{x:Bind Text, Mode=OneWay}"
-                                                                        IsTextSelectionEnabled="True" />
+                                                                        IsTextSelectionEnabled="True"
+                                                                        Visibility="{x:Bind IsEditing, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                                            <TextBox Text="{x:Bind EditText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     AcceptsReturn="True"
+                                                     TextWrapping="Wrap"
+                                                     MinWidth="320"
+                                                     MaxHeight="240"
+                                                     Visibility="{x:Bind IsEditing, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                             <TextBlock Text="{x:Bind TimeDisplay}"
                                                        FontSize="11"
                                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
@@ -98,6 +97,30 @@
                                                         Visibility="{x:Bind CopyVisibility, Mode=OneWay}"
                                                         Click="CopyMessage_Click">
                                                     <icons:SymbolIcon FontSize="14" Symbol="Copy" />
+                                                </Button>
+                                                <Button Padding="6,2"
+                                                        Background="Transparent"
+                                                        BorderThickness="0"
+                                                        ToolTipService.ToolTip="Edit message"
+                                                        Visibility="{x:Bind IsUser, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                                        Click="EditMessage_Click">
+                                                    <icons:SymbolIcon FontSize="14" Symbol="Edit" />
+                                                </Button>
+                                                <Button Padding="6,2"
+                                                        Background="Transparent"
+                                                        BorderThickness="0"
+                                                        ToolTipService.ToolTip="Save changes"
+                                                        Visibility="{x:Bind IsEditing, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                                        Click="SaveMessage_Click">
+                                                    <icons:SymbolIcon FontSize="14" Symbol="Checkmark" />
+                                                </Button>
+                                                <Button Padding="6,2"
+                                                        Background="Transparent"
+                                                        BorderThickness="0"
+                                                        ToolTipService.ToolTip="Cancel editing"
+                                                        Visibility="{x:Bind IsEditing, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                                        Click="CancelEditing_Click">
+                                                    <icons:SymbolIcon FontSize="14" Symbol="Dismiss" />
                                                 </Button>
                                                 <Button Padding="6,2"
                                                         Background="Transparent"

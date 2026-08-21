@@ -123,6 +123,30 @@ public sealed partial class ChatView : UserControl
         }
     }
 
+    private void EditMessage_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is ChatViewModel vm && sender is Button { DataContext: ChatMessageVM message })
+        {
+            vm.EditMessage(message);
+        }
+    }
+
+    private void SaveMessage_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is ChatViewModel vm && sender is Button { DataContext: ChatMessageVM message })
+        {
+            vm.SaveMessage(message);
+        }
+    }
+
+    private void CancelEditing_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: ChatMessageVM message })
+        {
+            ChatViewModel.CancelEditing(message);
+        }
+    }
+
     private void InputBox_KeyDown(object sender, KeyRoutedEventArgs e)
     {
         if (e.Key != VirtualKey.Enter)
