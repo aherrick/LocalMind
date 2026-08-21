@@ -22,6 +22,7 @@ public partial class ChatMessageVM : ObservableObject
     {
         Role = role;
         Text = text;
+        EditText = text;
         Timestamp = timestamp;
     }
 
@@ -48,7 +49,6 @@ public partial class ChatMessageVM : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RegenerateVisibility))]
-        EditText = text;
     public partial bool IsLast { get; set; }
 }
 
