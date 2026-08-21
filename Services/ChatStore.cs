@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using LocalMind.Models;
 
@@ -64,6 +65,32 @@ public static class ChatStore
 
     public static Task Export(Chat chat, string path)
     {
+        if (string.Equals(Path.GetExtension(path), ".md", StringComparison.OrdinalIgnoreCase))
+        {
+            var markdown = new StringBuilder()
+                .Append("# ").AppendLine(chat.Title);
+
+            if (!string.IsNullOrWhiteSpace(chat.ModelDisplayName))
+            {
+                markdown.AppendLine()
+                    .Append("> Model: ").AppendLine(chat.ModelDisplayName);
+            }
+
+            foreach (var message in chat.Messages)
+            {
+                var role = string.Equals(message.Role, "user", StringComparison.OrdinalIgnoreCase)
+                    ? "User"
+                    : "Assistant";
+                markdown.AppendLine()
+                    .Append("## ").Append(role)
+                    .Append(" — ").AppendLine(message.Timestamp.ToLocalTime().ToString("MMM d, yyyy, h:mm tt"))
+                    .AppendLine()
+                    .AppendLine(message.Text);
+            }
+
+            return File.WriteAllTextAsync(path, markdown.ToString());
+        }
+
         var document = new ConversationFile { Chat = chat };
         return File.WriteAllTextAsync(path, JsonSerializer.Serialize(document, Options));
     }

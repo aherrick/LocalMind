@@ -159,6 +159,7 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
             SuggestedFileName = chat.Title,
         };
         picker.FileTypeChoices.Add("LocalMind conversation", [".json"]);
+        picker.FileTypeChoices.Add("Markdown document", [".md"]);
         WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(this));
 
         var file = await picker.PickSaveFileAsync();

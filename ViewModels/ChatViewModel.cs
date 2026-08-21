@@ -32,7 +32,7 @@ public partial class ChatMessageVM : ObservableObject
     public string TimeDisplay => Timestamp.ToLocalTime().ToString("MMM d, h:mm tt");
     public HorizontalAlignment Alignment => IsUser ? HorizontalAlignment.Right : HorizontalAlignment.Stretch;
     public Brush Background => IsUser ? new SolidColorBrush(Windows.UI.Color.FromArgb(255, 50, 50, 50)) : null;
-    public Visibility CopyVisibility => !IsUser && !string.IsNullOrEmpty(Text) ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility CopyVisibility => !string.IsNullOrEmpty(Text) ? Visibility.Visible : Visibility.Collapsed;
     public bool IsThinking => !IsUser && string.IsNullOrEmpty(Text);
     public Visibility RegenerateVisibility => IsLast && !IsUser && !string.IsNullOrEmpty(Text) ? Visibility.Visible : Visibility.Collapsed;
 
