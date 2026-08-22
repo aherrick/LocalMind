@@ -18,17 +18,21 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<ChatViewModel> Chats { get; } = [];
     public ObservableCollection<LocalModel> ReadyModels { get; } = [];
     public SettingsViewModel Settings { get; }
-    public event Action SidebarSelectionClearRequested;
 
     public bool HasPinned => PinnedChats.Count > 0;
 
+    // The sidebar shows no selection while Settings is open, without losing the underlying SelectedChat.
+    public ChatViewModel SidebarSelectedChat => IsSettingsOpen ? null : SelectedChat;
+
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SidebarSelectedChat))]
     public partial ChatViewModel SelectedChat { get; set; }
 
     [ObservableProperty]
     public partial string SearchText { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SidebarSelectedChat))]
     public partial bool IsSettingsOpen { get; set; }
 
     public MainViewModel(
@@ -125,7 +129,6 @@ public partial class MainViewModel : ObservableObject
         Refilter();
         IsSettingsOpen = false;
         SelectedChat = chat;
-        SidebarSelectionClearRequested?.Invoke();
     }
 
     partial void OnSelectedChatChanged(ChatViewModel value)
@@ -134,14 +137,6 @@ public partial class MainViewModel : ObservableObject
         {
             IsSettingsOpen = false;
             value.LoadSavedModel();
-        }
-    }
-
-    partial void OnIsSettingsOpenChanged(bool value)
-    {
-        if (value)
-        {
-            SidebarSelectionClearRequested?.Invoke();
         }
     }
 

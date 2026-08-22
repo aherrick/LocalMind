@@ -1,10 +1,8 @@
-using System.ClientModel;
 using LocalMind.Models;
 using LocalMind.Services;
 using Microsoft.AI.Foundry.Local;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
-using OpenAI;
 
 namespace LocalMind.Providers;
 
@@ -17,6 +15,8 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
         ("qwen2.5-1.5b", "Qwen2.5 1.5B"),
         ("phi-3.5-mini", "Phi-3.5 Mini"),
         ("deepseek-r1-7b", "DeepSeek R1 7B"),
+        ("qwen3.5-9b", "Qwen3.5 9B"),
+        ("qwen3-14b", "Qwen3 14B"),
     ];
 
     private readonly SemaphoreSlim _initGate = new(1, 1);
@@ -147,8 +147,7 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
             throw new InvalidOperationException("Foundry Local web service is not available.");
         }
 
-        // Foundry Local exposes an OpenAI-compatible endpoint; the local service needs no real API key.
-        var client = new OpenAIClient(new ApiKeyCredential("not-needed"), new OpenAIClientOptions { Endpoint = new Uri(_baseUrl.TrimEnd('/') + "/v1") });
-        return client.GetChatClient(model.Id).AsIChatClient();
+        // Foundry Local exposes an OpenAI-compatible endpoint.
+        return OpenAICompatible.CreateChatClient(new Uri(_baseUrl.TrimEnd('/') + "/v1"), model.Id);
     }
 }

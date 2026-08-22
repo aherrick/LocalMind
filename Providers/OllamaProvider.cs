@@ -31,5 +31,5 @@ public sealed class OllamaProvider : ILocalModelProvider
         => await TryGetModels(cancellationToken) ?? [];
 
     public Task<IChatClient> CreateChatClientAsync(string modelId, CancellationToken cancellationToken = default)
-        => Task.FromResult<IChatClient>(new OllamaApiClient(Endpoint, modelId));
+        => Task.FromResult(OpenAICompatible.CreateChatClient(new Uri(Endpoint, "/v1"), modelId));
 }

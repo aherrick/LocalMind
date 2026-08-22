@@ -35,7 +35,6 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
     {
         Root.DataContext = viewModel;
         ApplyTheme(viewModel.Settings.Theme);
-        viewModel.SidebarSelectionClearRequested += ClearChatSelection;
 
         viewModel.PropertyChanged += (_, args) =>
         {
@@ -62,12 +61,6 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
                 ApplyTheme(viewModel.Settings.Theme);
             }
         };
-    }
-
-    private void ClearChatSelection()
-    {
-        PinnedList.SelectedItem = null;
-        ChatList.SelectedItem = null;
     }
 
     private void ApplyTheme(string theme)

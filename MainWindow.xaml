@@ -18,7 +18,8 @@
         <MicaBackdrop />
     </Window.SystemBackdrop>
 
-    <Grid x:Name="Root">
+    <!-- KeyboardAcceleratorPlacementMode=Hidden keeps the Ctrl+N/Ctrl+F shortcuts but hides their tooltips. -->
+    <Grid x:Name="Root" KeyboardAcceleratorPlacementMode="Hidden">
         <Grid.KeyboardAccelerators>
             <KeyboardAccelerator Key="N" Modifiers="Control" Invoked="NewChat_Invoked" />
             <KeyboardAccelerator Key="F" Modifiers="Control" Invoked="SearchChats_Invoked" />
@@ -155,7 +156,7 @@
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     <ListView x:Name="PinnedList"
                               ItemsSource="{Binding PinnedChats}"
-                              SelectedItem="{Binding SelectedChat, Mode=OneWay}"
+                              SelectedItem="{Binding SidebarSelectedChat, Mode=OneWay}"
                               SelectionChanged="ChatList_SelectionChanged"
                               SelectionMode="Single"
                               MaxHeight="220"
@@ -175,7 +176,7 @@
                     <ListView x:Name="ChatList"
                               Grid.Row="1"
                               ItemsSource="{Binding Chats}"
-                              SelectedItem="{Binding SelectedChat, Mode=OneWay}"
+                              SelectedItem="{Binding SidebarSelectedChat, Mode=OneWay}"
                               SelectionChanged="ChatList_SelectionChanged"
                               SelectionMode="Single"
                               ItemContainerStyle="{StaticResource ChatItemContainerStyle}"

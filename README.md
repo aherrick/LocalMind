@@ -2,7 +2,7 @@
 
 [![Release](https://img.shields.io/github/v/release/aherrick/LocalMind?display_name=tag&sort=semver)](https://github.com/aherrick/LocalMind/releases)
 
-LocalMind is a Windows desktop chat app for running local AI models through Foundry Local and Ollama.
+LocalMind is a Windows desktop chat app for running local AI models through Foundry Local, Ollama, and llama.cpp.
 
 ## Get Started
 
@@ -18,9 +18,29 @@ ollama pull llama3.2
 
 LocalMind detects available Ollama models automatically.
 
+To use llama.cpp, install it and start a server. LocalMind connects to a running llama-server on `http://127.0.0.1:8080` and lists whatever model it is serving.
+
+1. Install llama.cpp:
+
+   ```powershell
+   winget install llama.cpp
+   ```
+
+   Restart your shell (or LocalMind) afterward so the new `PATH` takes effect.
+
+2. Start a server for a model. For example, to serve [Muse Glimmer 30B](https://huggingface.co/meta-models/Muse-Glimmer-30B-GGUF):
+
+   ```powershell
+   llama-server -hf meta-models/Muse-Glimmer-30B-GGUF:Q4_K_M --host 127.0.0.1 --port 8080
+   ```
+
+   The first run downloads the model (~17 GB); later runs reuse the cache. Add `--offline` to skip the network check once it is cached.
+
+3. In LocalMind, the served model appears under **llama.cpp** in **Settings** and in the model picker. Keep the server running while you chat.
+
 ## Features
 
-- Local model chat with Foundry Local and Ollama
+- Local model chat with Foundry Local, Ollama, and llama.cpp
 - Chat history, pinning, search, and conversation export
 - Markdown messages, timestamps, copy, and regenerate
 - System prompt, theme, startup, and update settings
