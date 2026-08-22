@@ -33,12 +33,13 @@ public partial class MainViewModel : ObservableObject
 
     public MainViewModel(
         FoundryLocalProvider foundry,
-        OllamaProvider ollama)
+        OllamaProvider ollama,
+        LlamaCppProvider llama)
     {
-        _providers = [foundry, ollama];
+        _providers = [foundry, ollama, llama];
         SearchText = "";
 
-        Settings = new SettingsViewModel(foundry, ollama);
+        Settings = new SettingsViewModel(foundry, ollama, llama);
         Settings.ModelReady += name =>
         {
             NotificationService.Show("Model ready", $"{name} finished downloading.");

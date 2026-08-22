@@ -33,7 +33,8 @@ public partial class App : Application
 
         var foundry = new FoundryLocalProvider();
         var ollama = new OllamaProvider();
-        var viewModel = new MainViewModel(foundry, ollama);
+        var llama = new LlamaCppProvider();
+        var viewModel = new MainViewModel(foundry, ollama, llama);
 
         _window.SetViewModel(viewModel);
         _window.Activate();

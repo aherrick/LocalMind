@@ -90,15 +90,20 @@ public partial class FoundryModelVM : ObservableObject
 public partial class SettingsViewModel : ObservableObject
 {
     private readonly OllamaProvider _ollama;
+    private readonly LlamaCppProvider _llama;
     private readonly AppSettings _settings;
 
     public ObservableCollection<FoundryModelVM> FoundryModels { get; } = [];
     public ObservableCollection<string> OllamaModels { get; } = [];
+    public ObservableCollection<string> LlamaCppModels { get; } = [];
     public IReadOnlyList<string> ThemeOptions { get; } = ["System", "Light", "Dark"];
     public string AppVersion => $"LocalMind v{AppInfo.Version}";
 
     [ObservableProperty]
     public partial string OllamaStatus { get; set; }
+
+    [ObservableProperty]
+    public partial string LlamaCppStatus { get; set; }
 
     [ObservableProperty]
     public partial bool IsLoadingModels { get; set; }
@@ -121,9 +126,10 @@ public partial class SettingsViewModel : ObservableObject
     public event Action<string> ModelReady;
     public event Action ModelsChanged;
 
-    public SettingsViewModel(FoundryLocalProvider foundry, OllamaProvider ollama)
+    public SettingsViewModel(FoundryLocalProvider foundry, OllamaProvider ollama, LlamaCppProvider llama)
     {
         _ollama = ollama;
+        _llama = llama;
         _settings = SettingsStore.Load();
         SystemPrompt = _settings.SystemPrompt;
         Theme = _settings.Theme;
@@ -131,6 +137,7 @@ public partial class SettingsViewModel : ObservableObject
         MinimizeToTrayOnClose = _settings.MinimizeToTrayOnClose;
         RunAtStartup = StartupManager.IsEnabled();
         OllamaStatus = "Checking…";
+        LlamaCppStatus = "Checking…";
         foreach (var (alias, displayName) in FoundryLocalProvider.Curated)
         {
             var model = new FoundryModelVM(foundry, alias, displayName, name => ModelReady?.Invoke(name));
@@ -209,7 +216,8 @@ public partial class SettingsViewModel : ObservableObject
     {
         var foundryRefresh = Task.WhenAll(FoundryModels.Select(model => model.Refresh()));
         var ollamaRefresh = _ollama.TryGetModels();
-        await Task.WhenAll(foundryRefresh, ollamaRefresh);
+        var llamaRefresh = _llama.TryGetModels();
+        await Task.WhenAll(foundryRefresh, ollamaRefresh, llamaRefresh);
 
         var models = await ollamaRefresh;
         if (models is null)
@@ -220,23 +228,35 @@ public partial class SettingsViewModel : ObservableObject
         else
         {
             OllamaStatus = "Connected";
-            SyncOllamaModels(models.Select(m => m.DisplayName));
+            Sync(OllamaModels, models.Select(m => m.DisplayName));
+        }
+
+        var llamaModels = await llamaRefresh;
+        if (llamaModels is null)
+        {
+            LlamaCppStatus = "Not detected";
+            LlamaCppModels.Clear();
+        }
+        else
+        {
+            LlamaCppStatus = "Connected";
+            Sync(LlamaCppModels, llamaModels.Select(m => m.DisplayName));
         }
     }
 
     // Only mutate the collection when it actually changed, to avoid rebuilding the list (flicker).
-    private void SyncOllamaModels(IEnumerable<string> names)
+    private static void Sync(ObservableCollection<string> target, IEnumerable<string> names)
     {
         List<string> incoming = [.. names];
-        if (OllamaModels.SequenceEqual(incoming))
+        if (target.SequenceEqual(incoming))
         {
             return;
         }
 
-        OllamaModels.Clear();
+        target.Clear();
         foreach (var name in incoming)
         {
-            OllamaModels.Add(name);
+            target.Add(name);
         }
     }
 }
