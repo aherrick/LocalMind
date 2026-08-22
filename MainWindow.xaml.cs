@@ -57,6 +57,10 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
                 {
                     SettingsHost.Content = new SettingsView { DataContext = viewModel.Settings };
                 }
+
+                // A OneWay SelectedItem binding doesn't reliably push null, so clear the sidebar highlight directly.
+                PinnedList.SelectedItem = null;
+                ChatList.SelectedItem = null;
             }
         };
 
