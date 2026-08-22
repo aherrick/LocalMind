@@ -35,7 +35,6 @@
                               ItemsSource="{Binding ReadyModels}"
                               SelectedItem="{Binding SelectedModel, Mode=TwoWay}"
                               IsEnabled="{Binding IsModelSelectionEnabled}"
-                              DropDownOpened="ModelPicker_DropDownOpened"
                               Visibility="{Binding ShowModelPicker, Converter={StaticResource BoolToVisibility}}" />
                 </StackPanel>
 

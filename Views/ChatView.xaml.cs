@@ -26,9 +26,6 @@ public sealed partial class ChatView : UserControl
         Loaded += (_, _) => ScrollToBottom();
     }
 
-    private void ModelPicker_DropDownOpened(object sender, object e)
-        => (DataContext as ChatViewModel)?.RefreshModels();
-
     private void OnDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
     {
         if (_messages is not null)

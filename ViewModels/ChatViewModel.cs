@@ -66,9 +66,6 @@ public partial class ChatViewModel : ObservableObject
     public ObservableCollection<LocalModel> ReadyModels => _catalog.ReadyModels;
     public event Action<ChatViewModel> Started;
 
-    // Re-scan providers immediately when the picker opens so a just-started server shows up without waiting.
-    public void RefreshModels() => _ = _catalog.Refresh();
-
     [ObservableProperty]
     public partial string Title { get; set; }
 
