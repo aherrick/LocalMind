@@ -5,6 +5,8 @@ namespace LocalMind.Services;
 // Reasoning models (DeepSeek-R1) stream their chain of thought inline as <think>...</think> when the
 // server has no reasoning parser. Providers that do split it out map it to TextReasoningContent, which
 // ChatResponseUpdate.Text already excludes, so only the inline case needs handling here.
+
+// TODO: keep an eye on this PR for foundry thinking, see if we can eliminate this down the road once it comes in: https://github.com/microsoft/foundry-local/pull/1009
 internal sealed class ThinkingTextFilter
 {
     private const string StartTag = "<think>";
@@ -47,6 +49,7 @@ internal sealed class ThinkingTextFilter
     private static bool IsPartialStartTag(string text)
     {
         var length = Math.Min(text.Length, StartTag.Length);
-        return text.AsSpan(0, length).Equals(StartTag.AsSpan(0, length), StringComparison.OrdinalIgnoreCase);
+        return text.AsSpan(0, length)
+            .Equals(StartTag.AsSpan(0, length), StringComparison.OrdinalIgnoreCase);
     }
 }

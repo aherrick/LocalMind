@@ -19,9 +19,21 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         InitializeComponent();
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
-        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "localmind.ico"));
+        SetWindowIcon();
         AppWindow.Closing += OnClosing;
+        Activated += OnFirstActivated;
     }
+
+    // The taskbar button is created lazily on first show, so re-apply the icon once to avoid the
+    // occasional default-icon race when the icon is only set in the constructor.
+    private void OnFirstActivated(object sender, WindowActivatedEventArgs args)
+    {
+        Activated -= OnFirstActivated;
+        SetWindowIcon();
+    }
+
+    private void SetWindowIcon()
+        => AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "localmind.ico"));
 
     public string AppVersion => $"LocalMind v{AppInfo.Version}";
 
