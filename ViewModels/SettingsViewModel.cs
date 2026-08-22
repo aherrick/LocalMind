@@ -42,8 +42,13 @@ public partial class FoundryModelVM : ObservableObject
         Status = "…";
     }
 
-    public async Task Refresh()
-        => Status = await _foundry.IsReady(Alias) ? "Ready" : "Download";
+    public void SetReady(bool isReady)
+    {
+        if (!IsBusy)
+        {
+            Status = isReady ? "Ready" : "Download";
+        }
+    }
 
     [RelayCommand(CanExecute = nameof(CanDownload))]
     private async Task Download()
@@ -89,8 +94,6 @@ public partial class FoundryModelVM : ObservableObject
 
 public partial class SettingsViewModel : ObservableObject
 {
-    private readonly OllamaProvider _ollama;
-    private readonly LlamaCppProvider _llama;
     private readonly AppSettings _settings;
 
     public ObservableCollection<FoundryModelVM> FoundryModels { get; } = [];
@@ -126,10 +129,8 @@ public partial class SettingsViewModel : ObservableObject
     public event Action<string> ModelReady;
     public event Action ModelsChanged;
 
-    public SettingsViewModel(FoundryLocalProvider foundry, OllamaProvider ollama, LlamaCppProvider llama)
+    public SettingsViewModel(FoundryLocalProvider foundry)
     {
-        _ollama = ollama;
-        _llama = llama;
         _settings = SettingsStore.Load();
         SystemPrompt = _settings.SystemPrompt;
         Theme = _settings.Theme;
@@ -212,36 +213,21 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private static Task CheckForUpdates() => UpdateService.CheckForUpdates();
 
-    public async Task Refresh()
+    public void ApplyProviderStatuses(IReadOnlyDictionary<string, LocalProviderStatus> statuses)
     {
-        var foundryRefresh = Task.WhenAll(FoundryModels.Select(model => model.Refresh()));
-        var ollamaRefresh = _ollama.TryGetModels();
-        var llamaRefresh = _llama.TryGetModels();
-        await Task.WhenAll(foundryRefresh, ollamaRefresh, llamaRefresh);
-
-        var models = await ollamaRefresh;
-        if (models is null)
+        var foundry = statuses["foundry"];
+        foreach (var model in FoundryModels)
         {
-            OllamaStatus = "Not detected";
-            OllamaModels.Clear();
-        }
-        else
-        {
-            OllamaStatus = "Connected";
-            Sync(OllamaModels, models.Select(m => m.DisplayName));
+            model.SetReady(foundry.Models.Any(ready => ready.Id == model.Alias));
         }
 
-        var llamaModels = await llamaRefresh;
-        if (llamaModels is null)
-        {
-            LlamaCppStatus = "Not detected";
-            LlamaCppModels.Clear();
-        }
-        else
-        {
-            LlamaCppStatus = "Connected";
-            Sync(LlamaCppModels, llamaModels.Select(m => m.DisplayName));
-        }
+        var ollama = statuses["ollama"];
+        OllamaStatus = ollama.IsAvailable ? "Connected" : "Not detected";
+        Sync(OllamaModels, ollama.Models.Select(model => model.DisplayName));
+
+        var llama = statuses["llamacpp"];
+        LlamaCppStatus = llama.IsAvailable ? "Connected" : "Not detected";
+        Sync(LlamaCppModels, llama.Models.Select(model => model.DisplayName));
     }
 
     // Only mutate the collection when it actually changed, to avoid rebuilding the list (flicker).

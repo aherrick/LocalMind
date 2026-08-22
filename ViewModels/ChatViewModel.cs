@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalMind.Models;
-using LocalMind.Providers;
 using LocalMind.Services;
 using Microsoft.Extensions.AI;
 using Microsoft.UI.Xaml;
@@ -56,7 +55,7 @@ public partial class ChatViewModel : ObservableObject
 {
     private const int ContextWindow = 32768;
 
-    private readonly IReadOnlyList<ILocalModelProvider> _providers;
+    private readonly ModelCatalog _catalog;
     private readonly SettingsViewModel _settings;
 
     private IChatClient _client;
@@ -64,7 +63,7 @@ public partial class ChatViewModel : ObservableObject
 
     public Chat Model { get; }
     public ObservableCollection<ChatMessageVM> Messages { get; } = [];
-    public ObservableCollection<LocalModel> ReadyModels { get; }
+    public ObservableCollection<LocalModel> ReadyModels => _catalog.ReadyModels;
     public event Action<ChatViewModel> Started;
 
     [ObservableProperty]
@@ -99,14 +98,12 @@ public partial class ChatViewModel : ObservableObject
 
     public ChatViewModel(
         Chat chat,
-        IReadOnlyList<ILocalModelProvider> providers,
-        ObservableCollection<LocalModel> readyModels,
+        ModelCatalog catalog,
         SettingsViewModel settings)
     {
         Model = chat;
-        _providers = providers;
+        _catalog = catalog;
         _settings = settings;
-        ReadyModels = readyModels;
 
         Title = chat.Title;
         Input = "";
@@ -234,8 +231,7 @@ public partial class ChatViewModel : ObservableObject
         IsModelLoading = true;
         try
         {
-            var provider = _providers.First(p => p.Id == providerId);
-            _client = await provider.CreateChatClientAsync(modelId);
+            _client = await _catalog.CreateChatClient(providerId, modelId);
         }
         catch (Exception ex)
         {

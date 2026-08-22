@@ -10,13 +10,12 @@ namespace LocalMind.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
-    private readonly List<ILocalModelProvider> _providers;
+    private readonly ModelCatalog _catalog;
     private readonly DispatcherQueue _dispatcher = DispatcherQueue.GetForCurrentThread();
     private readonly List<ChatViewModel> _all = [];
 
     public ObservableCollection<ChatViewModel> PinnedChats { get; } = [];
     public ObservableCollection<ChatViewModel> Chats { get; } = [];
-    public ObservableCollection<LocalModel> ReadyModels { get; } = [];
     public SettingsViewModel Settings { get; }
 
     public bool HasPinned => PinnedChats.Count > 0;
@@ -40,16 +39,28 @@ public partial class MainViewModel : ObservableObject
         OllamaProvider ollama,
         LlamaCppProvider llama)
     {
-        _providers = [foundry, ollama, llama];
+        _catalog = new ModelCatalog([foundry, ollama, llama]);
         SearchText = "";
 
-        Settings = new SettingsViewModel(foundry, ollama, llama);
+        Settings = new SettingsViewModel(foundry);
         Settings.ModelReady += name =>
         {
             NotificationService.Show("Model ready", $"{name} finished downloading.");
-            _ = RefreshReadyModels();
+            _ = _catalog.Refresh();
         };
-        Settings.ModelsChanged += () => _ = RefreshReadyModels();
+        Settings.ModelsChanged += () => _ = _catalog.Refresh();
+
+        Settings.IsLoadingModels = true;
+        _catalog.Refreshed += OnCatalogRefreshed;
+    }
+
+    // Project the shared provider snapshot into the view-models; the catalog owns all the polling.
+    private void OnCatalogRefreshed(IReadOnlyDictionary<string, LocalProviderStatus> statuses)
+    {
+        Settings.ApplyProviderStatuses(statuses);
+        Settings.IsLoadingModels = false;
+        SelectedChat?.LoadSavedModel();
+        SelectedChat?.NotifyModelStateChanged();
     }
 
     public void Initialize()
@@ -65,13 +76,14 @@ public partial class MainViewModel : ObservableObject
         {
             NewChat();
         }
-        _ = RefreshReadyModels();
+        _catalog.Start();
+        _ = _catalog.Refresh();
     }
 
     private ChatViewModel CreateChatViewModel(Chat chat)
     {
         var viewModel = new ChatViewModel(
-            chat, _providers, ReadyModels, Settings);
+            chat, _catalog, Settings);
         viewModel.Started += AddStartedChat;
         return viewModel;
     }
@@ -92,28 +104,6 @@ public partial class MainViewModel : ObservableObject
                 OnPropertyChanged(nameof(SelectedChat));
             }
         });
-    }
-
-    public async Task RefreshReadyModels()
-    {
-        Settings.IsLoadingModels = true;
-        SelectedChat?.NotifyModelStateChanged();
-        try
-        {
-            var results = await Task.WhenAll(_providers.Select(p => p.GetModelsAsync()));
-
-            ReadyModels.Clear();
-            foreach (var model in results.SelectMany(r => r))
-            {
-                ReadyModels.Add(model);
-            }
-        }
-        finally
-        {
-            Settings.IsLoadingModels = false;
-            SelectedChat?.LoadSavedModel();
-            SelectedChat?.NotifyModelStateChanged();
-        }
     }
 
     [RelayCommand]
@@ -144,7 +134,7 @@ public partial class MainViewModel : ObservableObject
     private async Task OpenSettings()
     {
         IsSettingsOpen = true;
-        await Settings.Refresh();
+        await _catalog.Refresh();
     }
 
     [RelayCommand]

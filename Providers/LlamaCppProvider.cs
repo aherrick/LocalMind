@@ -12,45 +12,40 @@ public sealed class LlamaCppProvider : ILocalModelProvider
     public string Id => "llamacpp";
     public string DisplayName => "llama.cpp";
 
-    public async Task<IReadOnlyList<LocalModel>> TryGetModels(CancellationToken cancellationToken = default)
+    public async Task<LocalProviderStatus> GetStatusAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             using var response = await Http.GetAsync(new Uri(Endpoint, "/v1/models"), cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                return null;
+                return new LocalProviderStatus(false, []);
             }
 
             await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
             using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-            if (!doc.RootElement.TryGetProperty("data", out var data))
-            {
-                return [];
-            }
-
             List<LocalModel> models = [];
-            foreach (var item in data.EnumerateArray())
+            if (doc.RootElement.TryGetProperty("data", out var data))
             {
-                if (item.TryGetProperty("id", out var idProp))
+                foreach (var item in data.EnumerateArray())
                 {
-                    var id = idProp.GetString();
-                    if (!string.IsNullOrWhiteSpace(id))
+                    if (item.TryGetProperty("id", out var idProp))
                     {
-                        models.Add(new LocalModel(Id, DisplayName, id, ShortName(id)));
+                        var id = idProp.GetString();
+                        if (!string.IsNullOrWhiteSpace(id))
+                        {
+                            models.Add(new LocalModel(Id, DisplayName, id, ShortName(id)));
+                        }
                     }
                 }
             }
-            return models;
+            return new LocalProviderStatus(true, models);
         }
         catch
         {
-            return null;
+            return new LocalProviderStatus(false, []);
         }
     }
-
-    public async Task<IReadOnlyList<LocalModel>> GetModelsAsync(CancellationToken cancellationToken = default)
-        => await TryGetModels(cancellationToken) ?? [];
 
     public Task<IChatClient> CreateChatClientAsync(string modelId, CancellationToken cancellationToken = default)
         => Task.FromResult(OpenAICompatible.CreateChatClient(new Uri(Endpoint, "/v1"), modelId));

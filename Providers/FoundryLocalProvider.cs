@@ -80,7 +80,7 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
         }
     }
 
-    public async Task<IReadOnlyList<LocalModel>> GetModelsAsync(CancellationToken cancellationToken = default)
+    public async Task<LocalProviderStatus> GetStatusAsync(CancellationToken cancellationToken = default)
     {
         List<LocalModel> ready = [];
         try
@@ -98,23 +98,9 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
         catch (Exception ex)
         {
             AppLog.Warning("Foundry Local model discovery failed.", ex);
+            return new LocalProviderStatus(false, []);
         }
-        return ready;
-    }
-
-    public async Task<bool> IsReady(string alias, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var catalog = await GetCatalog(cancellationToken);
-            var model = await catalog.GetModelAsync(alias, cancellationToken);
-            return model is not null && await model.IsCachedAsync(cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            AppLog.Warning($"Foundry Local readiness check failed for '{alias}'.", ex);
-            return false;
-        }
+        return new LocalProviderStatus(true, ready);
     }
 
     public async Task Download(string alias, Action<float> progress, CancellationToken cancellationToken = default)
