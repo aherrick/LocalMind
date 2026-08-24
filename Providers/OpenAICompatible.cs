@@ -10,7 +10,11 @@ internal static class OpenAICompatible
 {
     // Local servers need no real API key.
     public static IChatClient CreateChatClient(Uri baseUrl, string modelId)
-        => new OpenAIClient(new ApiKeyCredential("not-needed"), new OpenAIClientOptions { Endpoint = baseUrl })
+        => new OpenAIClient(new ApiKeyCredential("not-needed"), new OpenAIClientOptions
+        {
+            Endpoint = baseUrl,
+            NetworkTimeout = TimeSpan.FromMinutes(30)
+        })
             .GetChatClient(modelId)
             .AsIChatClient();
 }
