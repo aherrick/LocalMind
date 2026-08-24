@@ -31,7 +31,7 @@ jobs:
         run: vpk download github --repoUrl https://github.com/${{ github.repository }} --outputDir release
 
       - name: Package with Velopack
-        run: vpk pack --packId LocalMind --packVersion $env:VERSION --packDir publish --mainExe LocalMind.exe --outputDir release
+        run: vpk pack --packId LocalMind --packVersion $env:VERSION --packDir publish --mainExe LocalMind.exe --icon Assets/localmind.ico --outputDir release
 
       - name: Create GitHub release
         env:

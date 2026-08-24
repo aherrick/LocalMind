@@ -344,6 +344,11 @@ public partial class ChatViewModel : ObservableObject
             IsGenerating = false;
             _cts?.Dispose();
             _cts = null;
+            // A cancelled response with no text leaves a stuck "thinking" bubble; drop it.
+            if (string.IsNullOrEmpty(assistant.Text))
+            {
+                Messages.Remove(assistant);
+            }
             UpdateLastFlags();
             Persist();
             UpdateContext();
