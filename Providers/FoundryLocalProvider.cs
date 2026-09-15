@@ -17,6 +17,7 @@ public sealed class FoundryLocalProvider : ILocalModelProvider
         ("deepseek-r1-7b", "DeepSeek R1 7B"),
         ("qwen3.5-9b", "Qwen3.5 9B"),
         ("qwen3-14b", "Qwen3 14B"),
+        ("gemma-4-e2b-it", "Gemma 4 E2B IT"),
     ];
 
     private readonly SemaphoreSlim _initGate = new(1, 1);
