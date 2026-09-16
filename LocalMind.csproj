@@ -36,8 +36,8 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="FluentIcons.WinUI" Version="2.2.341" />
     <PackageReference Include="H.NotifyIcon.WinUI" Version="2.5.0-dev.2" />
-    <PackageReference Include="Microsoft.AI.Foundry.Local.WinML" Version="1.2.4" />
-    <PackageReference Include="Microsoft.Extensions.AI" Version="10.10.0" />
+	  <PackageReference Include="Microsoft.AI.Foundry.Local" Version="2.0.1" />
+	  <PackageReference Include="Microsoft.Extensions.AI" Version="10.10.0" />
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.10.0" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.4.1-experimental" />
     <PackageReference Include="OllamaSharp" Version="5.4.30" />
