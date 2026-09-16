@@ -216,6 +216,8 @@ public sealed partial class MainWindow : WinUIEx.WindowEx
         }
 
         vm.SelectedChat = chat;
+        // Re-selecting the already-open chat doesn't change SelectedChat, so close Settings here too.
+        vm.IsSettingsOpen = false;
         // The two lists share one SelectedChat; clear the sibling so only one row stays highlighted.
         var sibling = ReferenceEquals(list, PinnedList) ? ChatList : PinnedList;
         sibling.SelectedItem = null;
