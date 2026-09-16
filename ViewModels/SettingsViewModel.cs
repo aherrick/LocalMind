@@ -211,6 +211,9 @@ public partial class SettingsViewModel : ObservableObject
     private static void OpenLogs() => AppLog.OpenDirectory();
 
     [RelayCommand]
+    private static void OpenRepository() => AppInfo.OpenRepository();
+
+    [RelayCommand]
     private static Task CheckForUpdates() => UpdateService.CheckForUpdates();
 
     public void ApplyProviderStatuses(IReadOnlyDictionary<string, LocalProviderStatus> statuses)
