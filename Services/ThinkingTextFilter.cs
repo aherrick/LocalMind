@@ -6,7 +6,10 @@ namespace LocalMind.Services;
 // server has no reasoning parser. Providers that do split it out map it to TextReasoningContent, which
 // ChatResponseUpdate.Text already excludes, so only the inline case needs handling here.
 
-// TODO: keep an eye on this PR for foundry thinking, see if we can eliminate this down the road once it comes in: https://github.com/microsoft/foundry-local/pull/1009
+// TODO: revisit once Foundry Local's reasoning parsing is complete; remove this filter when installed
+// versions consistently return clean answer text during streaming and follow-up turns.
+//   - enable_thinking template setting (still open):    https://github.com/microsoft/foundry-local/pull/1009
+//   - reasoning isolation when the template opens the block (merged to main after v2.0.1, not in any release yet): https://github.com/microsoft/foundry-local/pull/1083
 internal sealed class ThinkingTextFilter
 {
     private const string StartTag = "<think>";

@@ -86,7 +86,7 @@
                                                      MinWidth="320"
                                                      MaxHeight="240"
                                                      Visibility="{x:Bind IsEditing, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                                            <TextBlock Text="{x:Bind TimeDisplay}"
+                                            <TextBlock Text="{x:Bind TimeDisplay, Mode=OneWay}"
                                                        FontSize="11"
                                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                                             <StackPanel Orientation="Horizontal" Spacing="2">

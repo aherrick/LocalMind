@@ -26,7 +26,6 @@ public partial class ChatMessageVM : ObservableObject
     }
 
     public MessageRole Role { get; }
-    public DateTimeOffset Timestamp { get; }
     public bool IsUser => Role == MessageRole.User;
     public string Header => Role.ToString();
     public string TimeDisplay => Timestamp.ToLocalTime().ToString("MMM d, h:mm tt");
@@ -41,6 +40,10 @@ public partial class ChatMessageVM : ObservableObject
 
     [ObservableProperty]
     public partial bool IsEditing { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TimeDisplay))]
+    public partial DateTimeOffset Timestamp { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsThinking), nameof(CopyVisibility), nameof(RegenerateVisibility))]
@@ -321,6 +324,10 @@ public partial class ChatViewModel : ObservableObject
                     var visibleText = thinkingFilter.Append(update.Text);
                     if (visibleText.Length > 0)
                     {
+                        if (assistant.Text.Length == 0)
+                        {
+                            assistant.Timestamp = DateTimeOffset.Now;
+                        }
                         assistant.Text += visibleText;
                         UpdateContext();
                     }
